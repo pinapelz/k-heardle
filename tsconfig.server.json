@@ -1,9 +1,9 @@
 {
   "compilerOptions": {
     "target": "ES2019",
-    "module": "commonjs",
-    "outDir": "dist",
-    "rootDir": ".",
+    "module": "CommonJS",
+    "outDir": "dist/server",
+    "rootDir": "server",
     "esModuleInterop": true,
     "strict": true
   },
