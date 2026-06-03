@@ -63,14 +63,14 @@ function ShareButton({ guesses, variant }: ShareButtonProps) {
     const windowsPlatforms = ['Win32', 'Win64', 'Windows', 'WinCE'];
     const onWindows =
       windowsPlatforms.indexOf(window.navigator.platform) !== -1;
-
+    const isSecureContext = window.isSecureContext;
     if (navigator.share !== undefined && !onWindows) {
       await navigator.share({ text: result });
-    } else if (navigator.clipboard !== undefined) {
+    } else if (isSecureContext && navigator.clipboard !== undefined) {
       await navigator.clipboard.writeText(result);
       setButtonText('Copied!');
     } else {
-      setButtonText('Failed to open share menu or copy');
+      setButtonText('Clipboard unavailable (requires secure context)');
     }
   }, [result]);
 
