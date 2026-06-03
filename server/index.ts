@@ -2,7 +2,7 @@ import express from 'express';
 import path from 'path';
 import crypto from 'crypto';
 import { songs } from './data/songs';
-import { startDate } from '../src/constants/startDate';
+import { startDate } from './data/startDate';
 import cors from 'cors';
 
 
@@ -39,6 +39,10 @@ app.get('/today', (_req, res) => {
 
 app.get('/songs', (_req, res) => {
   res.json(songs.map(({ artist, name }) => ({ artist, name })));
+});
+
+app.get('/info', (_req, res) => {
+  res.json({ startDate: startDate.toISOString() });
 });
 
 if (process.env.NODE_ENV === 'production') {

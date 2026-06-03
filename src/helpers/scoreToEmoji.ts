@@ -1,9 +1,12 @@
 import { GuessType, GuessState } from "../types/guess";
-import { appName, startDate } from "../constants";
+import { appName } from "../constants";
+import { fetchInfo } from "./fetchInfo";
 
-export function scoreToEmoji(guesses: GuessType[]): string {
+export async function scoreToEmoji(guesses: GuessType[]): Promise<string> {
   const msInDay = 86400000;
   const todaysDate = new Date();
+  const info = await fetchInfo();
+  const startDate = new Date(info.startDate);
   const index = Math.floor((todaysDate.getTime() - startDate.getTime() )/msInDay) + 1
   const emojis = {
     incorrect: "🟥",
