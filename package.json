@@ -12,6 +12,8 @@
     "@types/node": "^18.16.0",
     "@types/react": "^17.0.20",
     "@types/react-dom": "^17.0.9",
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
     "lodash": "^4.18.1",
     "prop-types": "^15.8.1",
     "react": "^17.0.2",
@@ -31,11 +33,16 @@
   },
   "scripts": {
     "start": "react-scripts start",
+    "start:server": "ts-node -P tsconfig.server.json server/index.ts",
+    "dev": "concurrently \"pnpm start\" \"pnpm start:server\"",
     "build": "react-scripts build",
+    "build:server": "tsc -p tsconfig.server.json",
+    "serve": "NODE_ENV=production node dist/server/index.js",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "prepare": "husky install"
   },
+  "proxy": "http://localhost:3001",
   "eslintConfig": {
     "extends": [
       "react-app",
@@ -57,10 +64,13 @@
   "devDependencies": {
     "@babel/core": "^7.22.5",
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
     "@types/lodash": "^4.14.180",
     "@types/styled-components": "^5.1.24",
     "@typescript-eslint/eslint-plugin": "^5.15.0",
     "@typescript-eslint/parser": "^5.15.0",
+    "concurrently": "^10.0.3",
     "eslint": "^8.3.0",
     "eslint-config-airbnb": "^19.0.4",
     "eslint-plugin-import": "^2.25.4",
@@ -69,7 +79,8 @@
     "eslint-plugin-react": "^7.29.4",
     "eslint-plugin-react-hooks": "^4.6.0",
     "husky": "^7.0.4",
-    "prettier": "^2.6.0"
+    "prettier": "^2.6.0",
+    "ts-node": "^10.9.2"
   },
-  "packageManager": "yarn@1.22.22"
+  "packageManager": "pnpm@8.15.3"
 }
