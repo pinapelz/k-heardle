@@ -1,5 +1,5 @@
 import React from "react";
-import { IoBug, IoHeart } from "react-icons/io5";
+import { IoBug } from "react-icons/io5";
 import { Button } from "..";
 
 import * as Styled from "./index.styled";

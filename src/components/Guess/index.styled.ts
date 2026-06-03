@@ -1,6 +1,7 @@
 import styled from "styled-components";
 import { GuessState } from "../../types/guess";
 
+//eslint-disable-next-line
 const stateColor = (theme: any, active: boolean, state: GuessState | undefined) => {
   if (active)                                return theme.border;
   if (state === GuessState.Correct)          return theme.green;
