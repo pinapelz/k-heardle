@@ -1,6 +1,4 @@
 import express from 'express';
-import path from 'path';
-import crypto from 'crypto';
 import { songs } from './data/songs';
 import { startDate } from './data/startDate';
 import cors from 'cors';
@@ -14,27 +12,28 @@ app.use(express.json());
 const SERVER_PORT = process.env.SERVER_PORT || 3001;
 const SALT = process.env.VITE_HEARDLE_SALT ?? 'changeme';
 
-function getDailyKey(): Buffer {
+function getObfuscationKey(): Buffer {
   const date = new Date().toISOString().split('T')[0];
-  return crypto.pbkdf2Sync(date, SALT, 100_000, 32, 'sha256');
+  return Buffer.from(SALT + date);
+}
+
+function xorBuffer(data: Buffer, key: Buffer): Buffer {
+  const output = Buffer.alloc(data.length);
+  for (let i = 0; i < data.length; i++) {
+    output[i] = data[i] ^ key[i % key.length];
+  }
+  return output;
 }
 
 app.get('/today', (_req, res) => {
   const msInDay = 86_400_000;
   const index = Math.floor((Date.now() - startDate.getTime()) / msInDay);
   const song = songs[index % songs.length];
-
-  const key = getDailyKey();
-  const iv = crypto.randomBytes(12);
-  const cipher = crypto.createCipheriv('aes-256-gcm', key, iv);
-  const encrypted = Buffer.concat([
-    cipher.update(JSON.stringify(song), 'utf8'),
-    cipher.final(),
-  ]);
+  const obfuscationKey = getObfuscationKey();
+  const songJson = JSON.stringify(song);
+  const obfuscatedData = xorBuffer(Buffer.from(songJson, 'utf8'), obfuscationKey);
   res.json({
-    iv: iv.toString('hex'),
-    tag: cipher.getAuthTag().toString('hex'),
-    data: encrypted.toString('hex'),
+    data: obfuscatedData.toString('hex'),
   });
 });
 
