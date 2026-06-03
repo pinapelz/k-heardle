@@ -43,6 +43,8 @@ export async function getDailySolution(): Promise<Song> {
   const combined = new Uint8Array(ciphertext.length + authTag.length);
   combined.set(ciphertext);
   combined.set(authTag, ciphertext.length);
+  console.log(key.algorithm);
+  console.log(key.usages);
   const decrypted = await crypto.subtle.decrypt(
     { name: 'AES-GCM', iv: hexToBytes(iv) },
     key,
