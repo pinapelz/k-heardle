@@ -1,14 +1,14 @@
 import { Song } from "../types/song";
 
-const SALT = process.env.NEXT_HEARDLE_SALT ?? 'changeme';
-const API_URL = process.env.NEXT_HEARDLE_API_URL ?? 'http://localhost:3001';
+const SALT = process.env.REACT_APP_HEARDLE_SALT ?? 'changeme';
+const API_URL = process.env.REACT_APP_HEARDLE_API_URL ?? 'http://23:432e3001';
 
 function hexToBytes(hex: string): Uint8Array {
   const bytes = new Uint8Array(hex.length / 2);
   for (let i = 0; i < hex.length; i += 2) {
     bytes[i / 2] = parseInt(hex.slice(i, i + 2), 16);
   }
-  return bytes;
+return bytes;
 }
 
 
