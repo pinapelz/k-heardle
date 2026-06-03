@@ -1,7 +1,7 @@
 import { Song } from "../types/song";
 
-const SALT = process.env.HEARDLE_SALT ?? 'changeme';
-const API_URL = process.env.HEARDLE_API_URL ?? 'http://localhost:3001';
+const SALT = process.env.NEXT_HEARDLE_SALT ?? 'changeme';
+const API_URL = process.env.NEXT_HEARDLE_API_URL ?? 'http://localhost:3001';
 
 function hexToBytes(hex: string): Uint8Array {
   const bytes = new Uint8Array(hex.length / 2);
