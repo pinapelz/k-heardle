@@ -2,47 +2,38 @@ import styled from "styled-components";
 
 export const ProgressBackground = styled.div`
   position: relative;
-  z-index: -1;
-
   width: 100%;
-  height: 20px;
-  background-color: ${({ theme }) => theme.gray};
-  border-radius: 2px;
-
-  margin-top: 5%;
+  height: 12px;
+  background-color: var(--cl-gray-2);
+  border: 1px solid ${({ theme }) => theme.border};
+  margin: 24px 0 4px 0;
 `;
 
 export const Progress = styled.div<{ value: number }>`
   width: ${({ value }) => value * 6.25}%;
-  height: 20px;
-
-  align-self: flex-start;
-
+  height: 100%;
   background-color: ${({ theme }) => theme.green};
-
-  border-radius: 2px;
-
   transition: width 0.5s;
 `;
 
 export const Separator = styled.div`
   position: absolute;
   top: 0;
-
   width: 1px;
   height: 100%;
-
-  background-color: ${({ theme }) => theme.border100};
+  background-color: ${({ theme }) => theme.border};
 `;
 
 export const TimeStamps = styled.div`
   display: flex;
   justify-content: space-between;
-  align-items: center;
-
   width: 100%;
+  margin-bottom: 12px;
 `;
 
 export const TimeStamp = styled.p`
-  color: ${({ theme }) => theme.text};
+  margin: 0;
+  font-family: "Roboto Mono", monospace;
+  font-size: 0.7rem;
+  color: var(--cl-gray-5);
 `;

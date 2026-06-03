@@ -2,22 +2,26 @@ import styled from "styled-components";
 import { theme } from "../../constants";
 
 export const Button = styled.button<{ variant?: keyof typeof theme }>`
-  background-color: ${({ theme, variant }) =>
-    variant ? theme[variant] : theme.background100};
+  background-color: transparent;
+  border: 1px solid ${({ theme, variant }) =>
+    variant ? theme[variant] : theme.border};
+  color: ${({ theme, variant }) =>
+    variant ? theme[variant] : theme.text};
 
-  border-radius: 5px;
-  border: none;
+  font-family: "Roboto Mono", monospace;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
 
-  color: ${({ theme }) => theme.text};
-  font-size: 1rem;
-  font-weight: 800;
-
+  padding: 10px 20px;
   width: max-content;
-  padding: 12.5px 20px;
+  cursor: pointer;
+  transition: background-color 0.1s, color 0.1s;
 
   &:hover {
-    opacity: 0.8;
+    background-color: ${({ theme, variant }) =>
+      variant ? theme[variant] : theme.border};
+    color: var(--cl-gray-0);
   }
-
-  cursor: pointer;
 `;

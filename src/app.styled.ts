@@ -1,18 +1,12 @@
 import styled from "styled-components";
 
 export const Container = styled.div`
-  width: 40%;
-
-  @media (max-width: 768px) {
-    width: 90%;
-  }
-
-  max-width: 600px;
+  width: 100%;
+  max-width: 680px;
 
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  align-items: center;
+  align-items: stretch;
 
   margin: 0 auto;
 `;

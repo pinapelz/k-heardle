@@ -1,1 +1,1 @@
-export const appName = "EpicWolverine's Heardle"
+export const appName = "K-Heardle"

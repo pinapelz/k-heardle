@@ -1,49 +1,39 @@
 import styled from "styled-components";
 
 export const Container = styled.header`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
   width: 100%;
-
-  border-color: ${({ theme }) => theme.border};
-  border-bottom-width: 0.5px;
-  border-bottom-style: solid;
-
-  margin-bottom: 15px;
+  border-bottom: 1px solid ${({ theme }) => theme.border};
+  padding-bottom: 16px;
+  margin-bottom: 32px;
 `;
 
 export const Content = styled.div`
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
   align-items: center;
-  justify-content: space-between;
+  max-width: 680px;
+  margin: 0 auto;
 
-  width: 40%;
-
-  @media (max-width: 768px) {
-    width: 95%;
+  svg {
+    color: var(--cl-gray-6);
+    &:hover {
+      cursor: pointer;
+      color: var(--cl-white);
+    }
   }
 
-  max-width: 650px;
-
-  svg:hover {
-    cursor: pointer;
-    opacity: 0.8;
-  }
-
-  a {
-    color: ${({ theme }) => theme.text};
-  }
+  a { color: ${({ theme }) => theme.text}; }
 `;
 
 export const Logo = styled.h1`
-  color: ${({ theme }) => theme.text};
-  font-family: "Roboto Serif", serif;
+  font-family: "Roboto Mono", monospace;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.3em;
   text-transform: uppercase;
   text-align: center;
+  color: var(--cl-green-6);
+  margin: 0;
 
-  -webkit-touch-callout: none;
   user-select: none;
 `;

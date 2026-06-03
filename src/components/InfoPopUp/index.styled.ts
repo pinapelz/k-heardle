@@ -1,70 +1,64 @@
 import styled from "styled-components";
 
 export const Container = styled.div`
-  position: absolute;
+  position: fixed;
   top: 0;
-  z-index: 2;
-
+  left: 0;
+  z-index: 10;
   width: 100%;
   height: 100%;
-
   display: flex;
   align-items: center;
   justify-content: center;
-
-  background-color: rgba(0, 0, 0, 0.75);
+  background-color: rgba(0, 0, 0, 0.85);
 `;
 
 export const PopUp = styled.div`
   width: 90%;
-  max-width: 500px;
-  @media (max-width: 768px) {
-    width: 80%;
-  }
-  padding: 20px;
-
-  background-color: ${({ theme }) => theme.background100};
-
-  border-radius: 10px;
-
+  max-width: 480px;
+  padding: 32px;
+  background-color: var(--cl-gray-1);
+  border: 1px solid ${({ theme }) => theme.border};
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
 
   h1 {
-    margin-bottom: 0;
+    font-family: "Roboto Mono", monospace;
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--cl-green-6);
+    margin: 0;
   }
 `;
 
 export const Spacer = styled.div`
-  width: 70%;
-  height: 0.2px;
-
+  width: 100%;
+  height: 1px;
   margin: 20px 0;
-
-  background-color: ${({ theme }) => theme.text};
-  opacity: 0.5;
+  background-color: ${({ theme }) => theme.border};
 `;
 
 export const Section = styled.div`
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  justify-content: space-between;
+  width: 100%;
+  margin: 4px 0;
 
-  a {
-    color: ${({ theme }) => theme.text};
+  p {
+    font-size: 0.82rem;
+    line-height: 1.6;
+    color: var(--cl-gray-9);
+    margin: 0 0 8px 0;
   }
+
+  a { color: var(--cl-orange-6); }
 `;
 
 export const Contact = styled.p`
-  a {
-    color: ${({ theme }) => theme.text};
-  }
   margin-top: 5%;
-
-  font-size: 0.9rem;
-  font-weight: bold;
+  font-size: 0.75rem;
   opacity: 0.5;
+
+  a { color: ${({ theme }) => theme.text}; }
 `;

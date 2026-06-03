@@ -1,8 +1,47 @@
-body {
-  @import url('https://fonts.googleapis.com/css2?family=Raleway:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Roboto+Serif&display=swap');  margin: 0;
-  font-family: 'Raleway', sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  background-color: #00171F;
-  color: white;
+@import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;500;600;700&display=swap');
+
+:root {
+  --cl-black:       hsl(140, 1%, 6%);
+  --cl-gray-0:      hsl(140, 2%, 8%);
+  --cl-gray-1:      hsl(140, 2%, 12%);
+  --cl-gray-2:      hsl(140, 4%, 16%);
+  --cl-gray-3:      hsl(140, 4%, 24%);
+  --cl-gray-4:      hsl(140, 4%, 36%);
+  --cl-gray-5:      hsl(140, 4%, 44%);
+  --cl-gray-6:      hsl(80, 8%, 52%);
+  --cl-gray-7:      hsl(70, 8%, 58%);
+  --cl-gray-8:      hsl(60, 16%, 66%);
+  --cl-gray-9:      hsl(40, 32%, 78%);
+  --cl-gray-10:     hsl(30, 32%, 84%);
+  --cl-white:       hsl(26, 64%, 88%);
+  --cl-red-6:       hsl(4, 83%, 67%);
+  --cl-red-7:       hsl(4, 75%, 75%);
+  --cl-orange-6:    hsl(26, 84%, 62%);
+  --cl-orange-7:    hsl(26, 84%, 74%);
+  --cl-yellow:      hsl(37, 80%, 69%);
+  --cl-green-6:     hsl(120, 41%, 64%);
+  --cl-green-7:     hsl(120, 42%, 75%);
+  --cl-cyan-6:      hsl(160, 41%, 64%);
+  --cl-cyan-7:      hsl(160, 32%, 75%);
+  --cl-blue-6:      hsl(200, 55%, 64%);
+  --cl-blue-8:      hsl(201, 55%, 80%);
+  --cl-magenta-7:   hsl(320, 59%, 72%);
+  --cl-magenta-8:   hsl(320, 61%, 80%);
 }
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  border-radius: 0 !important;
+}
+
+body {
+  margin: 5vh 10vw;
+  font-family: "Roboto Mono", monospace;
+  background-color: var(--cl-gray-0);
+  color: var(--cl-white);
+}
+
+a:link    { color: var(--cl-orange-6); }
+a:visited,
+a:active  { color: var(--cl-green-6); }
+a:hover   { color: var(--cl-magenta-7); }

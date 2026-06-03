@@ -13,7 +13,8 @@ class PlaylistGenerator:
 
     def extract(self, urls: list) -> list[dict[str]]:
         info = {}
-        ydl_opts = {}
+        ydl_opts = {
+        }
         errors = []
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             for url in urls:

@@ -79,8 +79,8 @@ export function Player({ id, currentTry }: Props) {
           </Styled.TimeStamps>
           <IoPlay
             style={{ cursor: "pointer" }}
-            size={40}
-            color="#fff"
+            size={36}
+            color="var(--cl-green-6)"
             onClick={startPlayback}
           />
         </>
