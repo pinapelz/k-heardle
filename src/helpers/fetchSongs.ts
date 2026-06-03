@@ -6,7 +6,7 @@ function fuzzyMatch(input: string): string {
 
 
 export async function fetchSongs(useCache=true): Promise<Song[]> {
-  const API_URL = process.env.REACT_APP_HEARDLE_API_URL || "http://localhost:3001";
+  const API_URL = import.meta.env.VITE_HEARDLE_API_URL || "http://localhost:3001";
   if (useCache && cachedSongs) {
     return cachedSongs;
   }

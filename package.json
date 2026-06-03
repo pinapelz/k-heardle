@@ -4,9 +4,7 @@
   "license": "MIT",
   "dependencies": {
     "@testing-library/dom": "^9.3.1",
-    "@testing-library/jest-dom": "^5.14.1",
     "@testing-library/react": "^12.0.0",
-    "@testing-library/user-event": "^13.2.1",
     "@types/jest": "^27.0.1",
     "@types/node": "^18.16.0",
     "@types/react": "^17.0.20",
@@ -20,7 +18,6 @@
     "react-dom": "^17.0.2",
     "react-icons": "^4.3.1",
     "react-is": "^18.2.0",
-    "react-scripts": "5.0.1",
     "react-youtube": "^7.14.0",
     "styled-components": "^5.3.3",
     "typescript": "^4.4.2",
@@ -32,17 +29,15 @@
     "nth-check": "2.1.1"
   },
   "scripts": {
-    "start": "react-scripts start",
+    "start": "vite",
     "start:server": "ts-node -P tsconfig.server.json server/index.ts",
     "dev": "concurrently \"pnpm start\" \"pnpm start:server\"",
-    "build": "react-scripts build",
+    "build": "vite build",
     "build:server": "tsc -p tsconfig.server.json",
     "serve": "NODE_ENV=production node dist/server/index.js",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject",
+    "test": "vitest",
     "prepare": "husky install"
   },
-  "proxy": "http://localhost:3001",
   "eslintConfig": {
     "extends": [
       "react-app",
@@ -70,6 +65,7 @@
     "@types/styled-components": "^5.1.24",
     "@typescript-eslint/eslint-plugin": "^5.15.0",
     "@typescript-eslint/parser": "^5.15.0",
+    "@vitejs/plugin-react": "^6.0.2",
     "concurrently": "^10.0.3",
     "eslint": "^8.3.0",
     "eslint-config-airbnb": "^19.0.4",
@@ -80,7 +76,10 @@
     "eslint-plugin-react-hooks": "^4.6.0",
     "husky": "^7.0.4",
     "prettier": "^2.6.0",
-    "ts-node": "^10.9.2"
+    "ts-node": "^10.9.2",
+    "vite": "^8.0.16",
+    "vitest": "^1.0.0",
+    "@vitest/ui": "^1.0.0"
   },
   "packageManager": "pnpm@8.15.3"
 }

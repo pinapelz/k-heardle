@@ -12,7 +12,7 @@ app.use(cors());
 app.use(express.json());
 
 const SERVER_PORT = process.env.SERVER_PORT || 3001;
-const SALT = process.env.REACT_APP_HEARDLE_SALT ?? 'changeme';
+const SALT = process.env.VITE_HEARDLE_SALT ?? 'changeme';
 
 function getDailyKey(): Buffer {
   const date = new Date().toISOString().split('T')[0];
