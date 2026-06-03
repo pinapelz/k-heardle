@@ -1,7 +1,7 @@
 import { Song } from "../types/song";
 
 const SALT = process.env.REACT_APP_HEARDLE_SALT ?? 'changeme';
-const API_URL = process.env.REACT_APP_HEARDLE_API_URL ?? 'http://23:432e3001';
+const API_URL = process.env.REACT_APP_HEARDLE_API_URL ?? 'https://127.0.0.1:3001';
 
 function hexToBytes(hex: string): Uint8Array {
   const bytes = new Uint8Array(hex.length / 2);

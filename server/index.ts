@@ -1,7 +1,7 @@
 import express from 'express';
 import path from 'path';
 import crypto from 'crypto';
-import { songs } from '../src/data/songs';
+import { songs } from './data/songs';
 import { startDate } from '../src/constants/startDate';
 import cors from 'cors';
 

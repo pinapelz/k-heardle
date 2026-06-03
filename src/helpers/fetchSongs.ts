@@ -6,12 +6,13 @@ function fuzzyMatch(input: string): string {
 
 
 export async function fetchSongs(useCache=true): Promise<Song[]> {
+  const API_URL = process.env.REACT_APP_HEARDLE_API_URL || "http://localhost:3001";
   if (useCache && cachedSongs) {
     return cachedSongs;
   }
 
   try {
-    const response = await fetch('/songs');
+    const response = await fetch(`${API_URL}/songs`);
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }

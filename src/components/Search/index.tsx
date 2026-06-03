@@ -15,11 +15,23 @@ export function Search({ currentTry, setSelectedSong }: Props) {
   const [results, setResults] = React.useState<Song[]>([]);
 
   React.useEffect(() => {
-    if (value) {
-      setResults(searchSong(value));
-    } else if (value === "") {
-      setResults([]);
+    let cancelled = false;
+
+    async function runSearch() {
+      if (!value) {
+        setResults([]);
+        return;
+      }
+      const songs = await searchSong(value);
+
+      if (!cancelled) {
+        setResults(songs);
+      }
     }
+    runSearch();
+    return () => {
+      cancelled = true;
+    };
   }, [value]);
 
   // clear value on selection
