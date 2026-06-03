@@ -1,8 +1,7 @@
 {
-  "name": "personalheardle",
+  "name": "k-heardle",
   "version": "1.0.0",
   "license": "MIT",
-  "homepage": "https://heardle.epicwolverine.com",
   "dependencies": {
     "@testing-library/dom": "^9.3.1",
     "@testing-library/jest-dom": "^5.14.1",
