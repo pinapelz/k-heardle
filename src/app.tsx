@@ -3,8 +3,8 @@ import _ from "lodash";
 
 import { Song } from "./types/song";
 import { GuessState, GuessType } from "./types/guess";
+import { getDailySolution } from "./helpers/fetchSolution";
 
-import { todaysSolution } from "./helpers";
 
 import { Header, InfoPopUp, Game, Footer } from "./components";
 
@@ -22,6 +22,7 @@ function App() {
   const [currentTry, setCurrentTry] = React.useState<number>(0);
   const [selectedSong, setSelectedSong] = React.useState<Song>();
   const [didGuess, setDidGuess] = React.useState<boolean>(false);
+  const [todaysSolution, setTodaysSolution] = React.useState<Song | null>(null);
 
   const firstRun = localStorage.getItem("firstRun") === null;
 
@@ -59,6 +60,10 @@ function App() {
   let statsVersion = JSON.parse(localStorage.getItem("version") || "1");
 
   React.useEffect(() => {
+    getDailySolution().then(solution => setTodaysSolution(solution));
+  }, []);
+
+  React.useEffect(() => {
     if (Array.isArray(stats)) {
       const visitedToday = _.isEqual(
         todaysSolution,
@@ -78,8 +83,6 @@ function App() {
         setDidGuess(didGuess);
       }
     } else {
-      // initialize stats
-      // useEffect below does rest
       stats = [];
       stats.push({
         solution: todaysSolution,
@@ -168,7 +171,7 @@ function App() {
     let state = GuessState.Incorrect;
     if (selectedSong === todaysSolution) {
       state = GuessState.Correct;
-    } else if (selectedSong?.artist === todaysSolution.artist) {
+    } else if (selectedSong?.artist === todaysSolution?.artist) {
       state = GuessState.PartiallyCorrect
     }
 
@@ -194,6 +197,10 @@ function App() {
       setDidGuess(true);
     }
   }, [guesses, selectedSong]);
+
+  if (todaysSolution === null) {
+    return null;
+  }
 
   return (
     <main>
