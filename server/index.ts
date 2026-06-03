@@ -10,7 +10,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-const PORT = process.env.PORT || 3001;
+const SERVER_PORT = process.env.SERVER_PORT || 3001;
 const SALT = process.env.HEARDLE_SALT ?? 'changeme';
 
 function getDailyKey(): Buffer {
@@ -48,4 +48,4 @@ if (process.env.NODE_ENV === 'production') {
   });
 }
 
-app.listen(PORT, () => console.log(`Server running on :${PORT}`));
+app.listen(SERVER_PORT, () => console.log(`Server running on :${SERVER_PORT}`));

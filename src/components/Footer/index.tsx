@@ -20,7 +20,7 @@ export function Footer() {
   return (
     <footer>
       <Styled.Text>
-        <Styled.Link href="">
+        <Styled.Link href="https://github.com/pinapelz/k-heardle">
           Source Code
         </Styled.Link>
       </Styled.Text>

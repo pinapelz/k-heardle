@@ -4,7 +4,7 @@ import { appName, startDate } from "../constants";
 export function scoreToEmoji(guesses: GuessType[]): string {
   const msInDay = 86400000;
   const todaysDate = new Date();
-  const index = Math.floor((todaysDate.getTime() - startDate.getTime() )/msInDay) + 1 
+  const index = Math.floor((todaysDate.getTime() - startDate.getTime() )/msInDay) + 1
   const emojis = {
     incorrect: "🟥",
     partiallyCorrect: "🟨",
