@@ -4,7 +4,8 @@ import crypto from 'crypto';
 import { songs } from './data/songs';
 import { startDate } from './data/startDate';
 import cors from 'cors';
-
+import dotenv from 'dotenv';
+dotenv.config();
 
 const app = express();
 app.use(cors());
