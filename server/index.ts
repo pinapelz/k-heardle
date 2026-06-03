@@ -46,11 +46,5 @@ app.get('/info', (_req, res) => {
   res.json({ startDate: startDate.toISOString() });
 });
 
-if (process.env.NODE_ENV === 'production') {
-  app.use(express.static(path.join(__dirname, '../build')));
-  app.get('*', (_req, res) => {
-    res.sendFile(path.join(__dirname, '../build', 'index.html'));
-  });
-}
 
 app.listen(SERVER_PORT, () => console.log(`Server running on :${SERVER_PORT}`));
