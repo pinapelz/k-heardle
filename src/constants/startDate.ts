@@ -1,1 +1,1 @@
-export const startDate = new Date('5/5/2023');
+export const startDate = new Date('6/3/2026');
