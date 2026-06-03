@@ -1,6 +1,6 @@
 import React from "react";
 import YouTube from "react-youtube";
-import { IoPlay } from "react-icons/io5";
+import { IoPlay, IoPause } from "react-icons/io5";
 
 import { playTimes } from "../../constants";
 
@@ -77,12 +77,22 @@ export function Player({ id, currentTry }: Props) {
             <Styled.TimeStamp>1s</Styled.TimeStamp>
             <Styled.TimeStamp>16s</Styled.TimeStamp>
           </Styled.TimeStamps>
-          <IoPlay
-            style={{ cursor: "pointer" }}
-            size={36}
-            color="var(--cl-green-6)"
-            onClick={startPlayback}
-          />
+          {!play && (
+            <IoPlay
+              style={{ cursor: "pointer" }}
+              size={36}
+              color="var(--cl-green-6)"
+              onClick={startPlayback}
+            />
+          )}
+          {play && (
+            <IoPause
+              style={{ cursor: "pointer" }}
+              size={36}
+              color="var(--cl-green-6)"
+              onClick={startPlayback}
+            />
+          )}
         </>
       ) : (
         <p>Loading player...</p>

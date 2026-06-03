@@ -5,7 +5,6 @@ import { Song } from "./types/song";
 import { GuessState, GuessType } from "./types/guess";
 import { getDailySolution } from "./helpers/fetchSolution";
 
-
 import { Header, InfoPopUp, Game, Footer } from "./components";
 
 import * as Styled from "./app.styled";
@@ -31,15 +30,18 @@ function App() {
   }
   const urlHash = window.location.hash;
   const urlQueryParametersStart = urlHash.indexOf("?");
-  const statsImportQueryParameter = new URLSearchParams(urlHash.substring(urlQueryParametersStart)).get('statsImport') || "";
-  function importStats () {
-    if (statsImportQueryParameter){
-      const importedStats = JSON.parse(statsImportQueryParameter)
+  const statsImportQueryParameter =
+    new URLSearchParams(urlHash.substring(urlQueryParametersStart)).get(
+      "statsImport"
+    ) || "";
+  function importStats() {
+    if (statsImportQueryParameter) {
+      const importedStats = JSON.parse(statsImportQueryParameter);
       if (Array.isArray(importedStats)) {
-        importedStats.forEach(day => {
+        importedStats.forEach((day) => {
           if (Array.isArray(day.guesses)) {
-            if(day.guesses.length == 5){
-              day.guesses.push(initialGuess)
+            if (day.guesses.length == 5) {
+              day.guesses.push(initialGuess);
             }
           }
         });
@@ -48,9 +50,13 @@ function App() {
       reloadWithoutQueryParameters();
     }
   }
-  if (statsImportQueryParameter){
-    if (confirm("Do you want to import your previous stats? This will overwrite any stats on this site.")){
-      importStats()
+  if (statsImportQueryParameter) {
+    if (
+      confirm(
+        "Do you want to import your previous stats? This will overwrite any stats on this site."
+      )
+    ) {
+      importStats();
     } else {
       reloadWithoutQueryParameters();
     }
@@ -60,7 +66,7 @@ function App() {
   let statsVersion = JSON.parse(localStorage.getItem("version") || "1");
 
   React.useEffect(() => {
-    getDailySolution().then(solution => setTodaysSolution(solution));
+    getDailySolution().then((solution) => setTodaysSolution(solution));
   }, []);
 
   React.useEffect(() => {
@@ -90,29 +96,32 @@ function App() {
     }
     const currentVersion = 2;
     if (firstRun) {
-      statsVersion = currentVersion
-    }
-    else if (statsVersion < currentVersion) {
+      statsVersion = currentVersion;
+    } else if (statsVersion < currentVersion) {
       statsVersion = currentVersion;
       if (Array.isArray(stats)) {
         for (let index = 0; index < stats.length; index++) {
           const newGuesses: GuessType[] = [];
-          for (let guessIndex = 0; guessIndex < stats[index].guesses.length; guessIndex++) {
+          for (
+            let guessIndex = 0;
+            guessIndex < stats[index].guesses.length;
+            guessIndex++
+          ) {
             const guess = stats[index].guesses[guessIndex];
             if (guess.skipped !== undefined) {
-                let state = undefined;
-                if (guess.skipped) {
-                  state = GuessState.Skipped;
-                } else if (guess.isCorrect){
-                  state = GuessState.Correct;
-                } else if (guess.isCorrect === false){
-                  state = GuessState.Incorrect;
-                }
-                newGuesses.push({
-                  song: guess.song,
-                  state: state,
-                } as GuessType);
+              let state = undefined;
+              if (guess.skipped) {
+                state = GuessState.Skipped;
+              } else if (guess.isCorrect) {
+                state = GuessState.Correct;
+              } else if (guess.isCorrect === false) {
+                state = GuessState.Incorrect;
               }
+              newGuesses.push({
+                song: guess.song,
+                state: state,
+              } as GuessType);
+            }
           }
           stats[index].guesses = newGuesses;
         }
@@ -169,10 +178,11 @@ function App() {
 
   const guess = React.useCallback(() => {
     let state = GuessState.Incorrect;
-    if (selectedSong === todaysSolution) {
+    if (!selectedSong) return;
+    if (selectedSong?.artist === todaysSolution?.artist && selectedSong?.name === todaysSolution?.name) {
       state = GuessState.Correct;
     } else if (selectedSong?.artist === todaysSolution?.artist) {
-      state = GuessState.PartiallyCorrect
+      state = GuessState.PartiallyCorrect;
     }
 
     if (!selectedSong) {
