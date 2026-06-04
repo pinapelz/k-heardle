@@ -6,6 +6,7 @@ import random
 from dotenv import load_dotenv
 from datetime import datetime, timezone
 import yt_dlp
+import time
 
 load_dotenv()
 
@@ -78,14 +79,45 @@ def upload_to_r2(file_path: str, object_key: str):
     s3.upload_file(file_path, BUCKET, object_key)
 
 
+def write_json(file_path, data):
+    with open(file_path, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=4, ensure_ascii=False)
+
+def read_json(file_path, default=None):
+    if default is None:
+        default = {}
+    if not os.path.exists(file_path):
+        with open(file_path, "w", encoding="utf-8") as f:
+            json.dump(default, f, indent=4, ensure_ascii=False)
+        return default
+    try:
+        with open(file_path, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except json.JSONDecodeError:
+        with open(file_path, "w", encoding="utf-8") as f:
+            json.dump(default, f, indent=4, ensure_ascii=False)
+        return default
+
 def main():
+    new_data = False
     daily_data = fetch_daily()
+    attempt = 0
+    while not new_data:
+        dumped_data = read_json("save.json")
+        if dumped_data == daily_data:
+            attempt += 1
+            print(f"Server still returning old data, waiting... {attempt} ")
+            time.sleep(5)
+        else:
+            new_data = True
+        daily_data = fetch_daily()
     data = decode_data(daily_data["data"])
     print(data)
     youtube_id = data["youtubeId"]
     clip_path = download_random_segment_mp3(youtube_id)
     date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     upload_to_r2(clip_path, f"kheardle/{date}.mp3")
+    write_json("save.json", daily_data)
 
 if __name__ == "__main__":
     main()
