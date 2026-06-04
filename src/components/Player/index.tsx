@@ -1,101 +1,142 @@
 import React from "react";
-import YouTube from "react-youtube";
 import { IoPlay, IoPause } from "react-icons/io5";
 
 import { playTimes } from "../../constants";
-
-import * as Styled from "./index.styled";
+import * as Styled from "../YTPlayer/index.styled";
 
 interface Props {
-  id: string;
   currentTry: number;
 }
 
-export function Player({ id, currentTry }: Props) {
-  const opts = {
-    width: "0",
-    height: "0",
-  };
+const MAX_TIME = 16;
 
-  // react-youtube doesn't export types for this
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const playerRef = React.useRef<any>(null);
+export function Player({ currentTry }: Props) {
+  const audioRef = React.useRef<HTMLAudioElement | null>(null);
 
   const currentPlayTime = playTimes[currentTry];
 
-  const [play, setPlay] = React.useState<boolean>(false);
+  const [play, setPlay] = React.useState(false);
+  const [currentTime, setCurrentTime] = React.useState(0);
+  const [isReady, setIsReady] = React.useState(false);
 
-  const [currentTime, setCurrentTime] = React.useState<number>(0);
+  const CDN_URL =
+    import.meta.env.VITE_CDN_URL || "https://yena.pinapelz.com/kheardle";
 
-  const [isReady, setIsReady] = React.useState<boolean>(false);
+  const dateString = new Date().toISOString().split("T")[0];
 
-  React.useEffect(() => {
-    setInterval(() => {
-      playerRef.current?.internalPlayer
-        .getCurrentTime()
-        .then((time: number) => {
-          setCurrentTime(time);
-        });
-    }, 250);
-  }, []);
-
-  React.useEffect(() => {
-    if (play) {
-      if (currentTime * 1000 >= currentPlayTime) {
-        playerRef.current?.internalPlayer.pauseVideo();
-        playerRef.current?.internalPlayer.seekTo(0);
-        setPlay(false);
-      }
-    }
-  }, [play, currentTime]);
-
-  // don't call play video each time currentTime changes
   const startPlayback = React.useCallback(() => {
-    playerRef.current?.internalPlayer.playVideo();
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    audio.play();
     setPlay(true);
   }, []);
 
-  const setReady = React.useCallback(() => {
-    setIsReady(true);
+  const stopPlayback = React.useCallback(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    audio.pause();
+    audio.currentTime = 0;
+    setPlay(false);
+  }, []);
+
+  React.useEffect(() => {
+    const audio = new Audio(`${CDN_URL}/${dateString}.mp3`);
+    audioRef.current = audio;
+
+    audio.addEventListener("loadeddata", () => {
+      setIsReady(true);
+    });
+
+    audio.addEventListener("timeupdate", () => {
+      setCurrentTime(audio.currentTime);
+    });
+
+    audio.addEventListener("ended", () => {
+      setPlay(false);
+      audio.currentTime = 0;
+    });
+
+    return () => {
+      audio.pause();
+      audio.src = "";
+    };
+  }, [dateString]);
+
+  React.useEffect(() => {
+    if (!play || !audioRef.current) return;
+
+    const interval = setInterval(() => {
+      const a = audioRef.current!;
+      const t = a.currentTime * 1000;
+
+      setCurrentTime(a.currentTime);
+
+      if (t >= currentPlayTime || t >= MAX_TIME * 1000) {
+        a.pause();
+        a.currentTime = 0;
+        setPlay(false);
+      }
+    }, 100);
+
+    return () => clearInterval(interval);
+  }, [play, currentPlayTime]);
+
+  React.useEffect(() => {
+    if (!("mediaSession" in navigator)) return;
+
+    navigator.mediaSession.setActionHandler("play", () => undefined);
+    navigator.mediaSession.setActionHandler("pause", () => undefined);
+    navigator.mediaSession.setActionHandler("previoustrack", () => undefined);
+    navigator.mediaSession.setActionHandler("nexttrack", () => undefined);
+
+    return () => {
+      navigator.mediaSession.setActionHandler("play", null);
+      navigator.mediaSession.setActionHandler("pause", null);
+      navigator.mediaSession.setActionHandler("previoustrack", null);
+      navigator.mediaSession.setActionHandler("nexttrack", null);
+    };
   }, []);
 
   return (
     <>
-      <YouTube opts={opts} videoId={id} onReady={setReady} ref={playerRef} />
       {isReady ? (
         <>
           <Styled.ProgressBackground>
-            {currentTime !== 0 && <Styled.Progress value={currentTime} />}
-            {playTimes.map((playTime) => (
+            {currentTime !== 0 && (
+              <Styled.Progress value={currentTime} />
+            )}
+
+            {playTimes.map((t) => (
               <Styled.Separator
-                style={{ left: `${(playTime / 16000) * 100}%` }}
-                key={playTime}
+                key={t}
+                style={{ left: `${(t / 16000) * 100}%` }}
               />
             ))}
           </Styled.ProgressBackground>
+
           <Styled.TimeStamps>
             <Styled.TimeStamp>1s</Styled.TimeStamp>
             <Styled.TimeStamp>16s</Styled.TimeStamp>
           </Styled.TimeStamps>
-          {!play && (
+
+          {!play ? (
             <IoPlay
               style={{ cursor: "pointer" }}
               size={36}
-              color="var(--cl-green-6)"
               onClick={startPlayback}
             />
-          )}
-          {play && (
+          ) : (
             <IoPause
               style={{ cursor: "pointer" }}
               size={36}
-              color="var(--cl-green-6)"
-              onClick={startPlayback}
+              onClick={stopPlayback}
             />
           )}
         </>
       ) : (
-        <p>Loading player...</p>
+        <p>Loading audio...</p>
       )}
     </>
   );

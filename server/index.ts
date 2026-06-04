@@ -25,10 +25,32 @@ function xorBuffer(data: Buffer, key: Buffer): Buffer {
   return output;
 }
 
+function getUtcDate(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+function hashString(str: string): number {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = (hash * 31 + str.charCodeAt(i)) >>> 0;
+  }
+  return hash;
+}
+
 app.get('/today', (_req, res) => {
-  const msInDay = 86_400_000;
-  const index = Math.floor((Date.now() - startDate.getTime()) / msInDay);
-  const song = songs[index % songs.length];
+  const date = getUtcDate();
+  const seed = hashString(date);
+  const index = seed % songs.length;
+  const song = songs[index];
+  const obfuscationKey = getObfuscationKey();
+  const songJson = JSON.stringify(song);
+  const obfuscatedData = xorBuffer(Buffer.from(songJson, 'utf8'), obfuscationKey);
+  res.json({
+    data: obfuscatedData.toString('hex'),
+  });
+});
+
+app.get('/select', (_req, res) => {
+  const song = songs[Math.floor(Math.random() * songs.length)];
   const obfuscationKey = getObfuscationKey();
   const songJson = JSON.stringify(song);
   const obfuscatedData = xorBuffer(Buffer.from(songJson, 'utf8'), obfuscationKey);

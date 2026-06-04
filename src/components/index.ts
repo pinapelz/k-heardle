@@ -5,6 +5,7 @@ export { Guess } from "./Guess";
 export { Header } from "./Header";
 export { InfoPopUp } from "./InfoPopUp";
 export { MiniYouTubePlayer} from "./MiniYouTubePlayer";
+export { Player as YTPlayer } from "./YTPlayer";
 export { Player } from "./Player";
 export { Result } from "./Result";
 export { Search } from "./Search";

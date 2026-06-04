@@ -4,7 +4,7 @@ import { GuessType } from "../../types/guess";
 import { Song } from "../../types/song";
 import { playTimes } from "../../constants";
 
-import { Button, Guess, Player, Search, Result } from "../";
+import { Button, Guess, YTPlayer, Search, Result, Player } from "../";
 
 import * as Styled from "./index.styled";
 
@@ -16,6 +16,8 @@ interface Props {
   setSelectedSong: React.Dispatch<React.SetStateAction<Song | undefined>>;
   skip: () => void;
   guess: () => void;
+  mode?: "daily" | "unlimited";
+  onPlayAgain?: () => void;
 }
 
 export function Game({
@@ -26,6 +28,8 @@ export function Game({
   setSelectedSong,
   skip,
   guess,
+  mode = "daily",
+  onPlayAgain,
 }: Props) {
   if (didGuess || currentTry === 6) {
     return (
@@ -34,19 +38,22 @@ export function Game({
         currentTry={currentTry}
         todaysSolution={todaysSolution}
         guesses={guesses}
+        mode={mode}
+        onPlayAgain={onPlayAgain}
       />
     );
   }
   return (
     <>
       {guesses.map((guess: GuessType, index) => (
-        <Guess
-          key={index}
-          guess={guess}
-          active={index === currentTry}
-        />
+        <Guess key={index} guess={guess} active={index === currentTry} />
       ))}
-      <Player id={todaysSolution.youtubeId} currentTry={currentTry} />
+      {mode === "unlimited" ? (
+        <YTPlayer id={todaysSolution.youtubeId} currentTry={currentTry} />
+      ) : (
+        <Player currentTry={currentTry} />
+      )}
+
       <Search currentTry={currentTry} setSelectedSong={setSelectedSong} />
 
       <Styled.Buttons>

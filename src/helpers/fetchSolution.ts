@@ -25,14 +25,27 @@ function getObfuscationKey(): Uint8Array {
   return new TextEncoder().encode(SALT + date);
 }
 
+function decryptResponse(data: string): Song {
+  const obfuscationKey = getObfuscationKey();
+  const obfuscatedBytes = hexToBytes(data);
+  const decrypted = xor(obfuscatedBytes, obfuscationKey);
+  return JSON.parse(new TextDecoder().decode(decrypted)) as Song;
+}
+
 export async function getDailySolution(): Promise<Song> {
   const solutionData = await fetch(`${API_URL}/today`);
   if (!solutionData.ok) {
     throw new Error(`Failed to fetch solution: ${solutionData.statusText}`);
   }
   const { data } = await solutionData.json();
-  const obfuscationKey = getObfuscationKey();
-  const obfuscatedBytes = hexToBytes(data);
-  const decrypted = xor(obfuscatedBytes, obfuscationKey);
-  return JSON.parse(new TextDecoder().decode(decrypted)) as Song;
+  return decryptResponse(data);
+}
+
+export async function getSelectSolution(): Promise<Song> {
+  const solutionData = await fetch(`${API_URL}/select`);
+  if (!solutionData.ok) {
+    throw new Error(`Failed to fetch solution: ${solutionData.statusText}`);
+  }
+  const { data } = await solutionData.json();
+  return decryptResponse(data);
 }

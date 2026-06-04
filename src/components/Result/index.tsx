@@ -14,17 +14,19 @@ interface SolutionProps {
   didGuess: boolean;
   currentTry: number;
   todaysSolution: Song;
+  isUnlimited?: boolean;
 }
 
 function Solution({
   didGuess,
   todaysSolution,
   currentTry,
+  isUnlimited,
 }: SolutionProps) {
   return (
     <>
       <Styled.SongTitle>
-        Today&apos;s song is {todaysSolution.artist} - {todaysSolution.name}
+        {isUnlimited ? "The song was" : "Today's song is"} {todaysSolution.artist} - {todaysSolution.name}
       </Styled.SongTitle>
 
       {didGuess && (
@@ -86,6 +88,8 @@ interface Props {
   currentTry: number;
   todaysSolution: Song;
   guesses: GuessType[];
+  mode?: "daily" | "unlimited";
+  onPlayAgain?: () => void;
 }
 
 export function Result({
@@ -93,6 +97,8 @@ export function Result({
   todaysSolution,
   guesses,
   currentTry,
+  mode = "daily",
+  onPlayAgain,
 }: Props) {
   const hoursToNextDay = Math.floor(
     (new Date(new Date().setHours(24, 0, 0, 0)).getTime() -
@@ -101,6 +107,8 @@ export function Result({
       60 /
       60
   );
+
+  const isUnlimited = mode === "unlimited";
 
   if (didGuess) {
     const textForTry = ["Perfect!", "Wow!", "Super!", "Congrats!", "Nice!"];
@@ -113,13 +121,20 @@ export function Result({
           todaysSolution={todaysSolution}
           didGuess={didGuess}
           currentTry={currentTry}
+          isUnlimited={isUnlimited}
         />
 
-        <ShareButton guesses={guesses} variant="green" />
+        {!isUnlimited && <ShareButton guesses={guesses} variant="green" />}
 
-        <Styled.TimeToNext>
-          Remember to come back in {hoursToNextDay} hours!
-        </Styled.TimeToNext>
+        {isUnlimited && onPlayAgain ? (
+          <Button variant="green" onClick={onPlayAgain}>
+            Play Again
+          </Button>
+        ) : (
+          <Styled.TimeToNext>
+            Remember to come back in {hoursToNextDay} hours!
+          </Styled.TimeToNext>
+        )}
       </>
     );
   }
@@ -132,13 +147,20 @@ export function Result({
         todaysSolution={todaysSolution}
         didGuess={didGuess}
         currentTry={currentTry}
+        isUnlimited={isUnlimited}
       />
 
-      <ShareButton guesses={guesses} variant="red" />
+      {!isUnlimited && <ShareButton guesses={guesses} variant="red" />}
 
-      <Styled.TimeToNext>
-        Try again in {hoursToNextDay} hours.
-      </Styled.TimeToNext>
+      {isUnlimited && onPlayAgain ? (
+        <Button variant="red" onClick={onPlayAgain}>
+          Play Again
+        </Button>
+      ) : (
+        <Styled.TimeToNext>
+          Try again in {hoursToNextDay} hours.
+        </Styled.TimeToNext>
+      )}
     </>
   );
 }

@@ -1,5 +1,4 @@
 #!/usr/bin/python3
-# Glitch has Python 3.7.10 installed
 import argparse
 from random import shuffle
 import yt_dlp

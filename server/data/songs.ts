@@ -422,7 +422,6 @@ export const songs = [
   { artist: "aespa", name: "Flights, Not Feelings", youtubeId: "Qe7FP1abS5s" },
   { artist: "LE SSERAFIM", name: "HOT", youtubeId: "cCkAcVOS3ig" },
   { artist: "i-dle", name: "Allergy", youtubeId: "Gcp87-ZegRA" },
-  { artist: "NewJeans", name: "Get Up", youtubeId: "SXM1q0CTfew" },
   { artist: "9MUSES", name: "Dolls", youtubeId: "QM58UGunHKY" },
   { artist: "Red Velvet", name: "Cosmic", youtubeId: "46FxItq18h0" },
   { artist: "ILLIT", name: "Midnight Fiction", youtubeId: "Sr7dWdf4Z3U" },
