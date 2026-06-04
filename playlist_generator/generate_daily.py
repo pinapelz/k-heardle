@@ -25,6 +25,11 @@ def get_obfuscation_key() -> bytes:
     date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     return (OBFUSCATION_KEY + date).encode("utf-8")
 
+def delete_file(file_path):
+    if os.path.exists(file_path):
+        os.remove(file_path)
+        return True
+    return False
 
 def decode_data(hex_data: str):
     encrypted = bytes.fromhex(hex_data)
@@ -117,6 +122,7 @@ def main():
     clip_path = download_random_segment_mp3(youtube_id)
     date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     upload_to_r2(clip_path, f"kheardle/{date}.mp3")
+    delete_file("today.mp3")
     write_json("save.json", daily_data)
 
 if __name__ == "__main__":
