@@ -37,3 +37,25 @@ export const TimeStamp = styled.p`
   font-size: 0.7rem;
   color: var(--cl-gray-5);
 `;
+
+export const VolumeControl = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+  max-width: 240px;
+  margin: 12px auto 0;
+`;
+
+export const VolumeLabel = styled.label`
+  font-family: "Roboto Mono", monospace;
+  font-size: 0.75rem;
+  color: var(--cl-gray-5);
+`;
+
+export const VolumeSlider = styled.input`
+  width: 100%;
+  accent-color: ${({ theme }) => theme.green};
+  cursor: pointer;
+`;

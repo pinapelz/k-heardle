@@ -9,6 +9,21 @@ interface Props {
 }
 
 const MAX_TIME = 16;
+const DEFAULT_VOLUME = 0.7;
+
+const loadVolume = () => {
+  try {
+    const storedVolume = localStorage.getItem("playerVolume");
+    if (storedVolume === null) return DEFAULT_VOLUME;
+
+    const parsedVolume = Number(storedVolume);
+    if (!Number.isFinite(parsedVolume)) return DEFAULT_VOLUME;
+
+    return Math.max(0, Math.min(1, parsedVolume));
+  } catch {
+    return DEFAULT_VOLUME;
+  }
+};
 
 export function Player({ currentTry }: Props) {
   const audioRef = React.useRef<HTMLAudioElement | null>(null);
@@ -18,6 +33,7 @@ export function Player({ currentTry }: Props) {
   const [play, setPlay] = React.useState(false);
   const [currentTime, setCurrentTime] = React.useState(0);
   const [isReady, setIsReady] = React.useState(false);
+  const [volume, setVolume] = React.useState(loadVolume);
 
   const CDN_URL =
     import.meta.env.VITE_CDN_URL || "localhost";
@@ -41,8 +57,16 @@ export function Player({ currentTry }: Props) {
     setPlay(false);
   }, []);
 
+  const updateVolume = React.useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      setVolume(Number(event.target.value));
+    },
+    []
+  );
+
   React.useEffect(() => {
     const audio = new Audio(`${CDN_URL}/${dateString}.mp3`);
+    audio.volume = loadVolume();
     audioRef.current = audio;
 
     audio.addEventListener("loadeddata", () => {
@@ -62,13 +86,26 @@ export function Player({ currentTry }: Props) {
       audio.pause();
       audio.src = "";
     };
-  }, [dateString]);
+  }, [CDN_URL, dateString]);
+
+  React.useEffect(() => {
+    if (!audioRef.current) return;
+
+    audioRef.current.volume = volume;
+
+    try {
+      localStorage.setItem("playerVolume", String(volume));
+    } catch {
+    }
+  }, [volume]);
 
   React.useEffect(() => {
     if (!play || !audioRef.current) return;
 
     const interval = setInterval(() => {
-      const a = audioRef.current!;
+      const a = audioRef.current;
+      if (!a) return;
+
       const t = a.currentTime * 1000;
 
       setCurrentTime(a.currentTime);
@@ -134,6 +171,22 @@ export function Player({ currentTry }: Props) {
               onClick={stopPlayback}
             />
           )}
+
+          <Styled.VolumeControl>
+            <Styled.VolumeLabel htmlFor="player-volume">
+              Volume {Math.round(volume * 100)}%
+            </Styled.VolumeLabel>
+            <Styled.VolumeSlider
+              id="player-volume"
+              type="range"
+              min="0"
+              max="1"
+              step="0.01"
+              value={volume}
+              onChange={updateVolume}
+              aria-label="Volume"
+            />
+          </Styled.VolumeControl>
         </>
       ) : (
         <p>Loading audio...</p>
