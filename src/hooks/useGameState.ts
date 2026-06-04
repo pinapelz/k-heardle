@@ -9,9 +9,29 @@ interface UseGameStateOptions {
   persist: boolean;
 }
 
+interface PersistedStats {
+  solution: string;
+  currentTry: number;
+  didGuess: boolean;
+  guesses: GuessType[];
+}
+
 const initialGuess: GuessType = {
   song: undefined,
   state: undefined,
+};
+
+const makeEmptyGuesses = () =>
+  Array.from({ length: 6 }, () => ({ ...initialGuess })) as GuessType[];
+
+const isAnsweredGuess = (guess: GuessType | undefined | null) =>
+  !!guess && !Array.isArray(guess) && guess.state !== undefined;
+
+const normalizeAnsweredGuesses = (guesses: unknown): GuessType[] => {
+  if (!Array.isArray(guesses)) return [];
+  if (guesses.some((guess) => Array.isArray(guess))) return [];
+
+  return (guesses as GuessType[]).filter(isAnsweredGuess).slice(0, 6);
 };
 
 const SALT = import.meta.env.VITE_HEARDLE_SALT || "changeme";
@@ -25,13 +45,35 @@ const getKey = (salt: string) => {
 };
 
 const KEY = getKey(SALT);
-function loadStats() {
+
+function loadStats(): PersistedStats | null {
   try {
     const raw = localStorage.getItem("stats");
-    const parsed = raw ? JSON.parse(raw) : [];
-    return Array.isArray(parsed) ? parsed : [];
+    if (!raw) return null;
+
+    const parsed = JSON.parse(raw);
+
+    if (!parsed || Array.isArray(parsed) || typeof parsed !== "object") {
+      localStorage.removeItem("stats");
+      return null;
+    }
+
+    const currentTry =
+      typeof parsed.currentTry === "number" && Number.isFinite(parsed.currentTry)
+        ? Math.max(0, Math.min(6, Math.floor(parsed.currentTry)))
+        : 0;
+
+    const normalized: PersistedStats = {
+      solution: typeof parsed.solution === "string" ? parsed.solution : "",
+      currentTry,
+      didGuess: !!parsed.didGuess,
+      guesses: normalizeAnsweredGuesses(parsed.guesses),
+    };
+
+    return normalized;
   } catch {
-    return [];
+    localStorage.removeItem("stats");
+    return null;
   }
 }
 
@@ -62,15 +104,15 @@ const decodeSolution = (value: string): Song | null => {
 };
 
 export function useGameState({ solution, persist }: UseGameStateOptions) {
-  const [guesses, setGuesses] = React.useState<GuessType[]>(
-    Array.from({ length: 6 }).fill(initialGuess) as GuessType[]
-  );
+  const [guesses, setGuesses] = React.useState<GuessType[]>(makeEmptyGuesses());
 
   const [currentTry, setCurrentTry] = React.useState(0);
   const [selectedSong, setSelectedSong] = React.useState<Song>();
   const [didGuess, setDidGuess] = React.useState(false);
 
-  const [stats, setStats] = React.useState<any[]>(() => loadStats());
+  const [stats, setStats] = React.useState<PersistedStats | null>(() =>
+    loadStats()
+  );
 
   const hydratedRef = React.useRef(false);
   const skipNextStatsSyncRef = React.useRef(false);
@@ -81,56 +123,50 @@ export function useGameState({ solution, persist }: UseGameStateOptions) {
 
     skipNextStatsSyncRef.current = true;
 
-    const last = stats.at(-1);
+    const initialStats: PersistedStats = {
+      solution: encodeSolution(solution),
+      currentTry: 0,
+      didGuess: false,
+      guesses: [],
+    };
 
-    if (!last) {
-      const newStats = [
-        ...stats,
-        {
-          solution: encodeSolution(solution),
-          currentTry: 0,
-          didGuess: false,
-          guesses: Array.from({ length: 6 }).fill(initialGuess),
-        },
-      ];
-
-      setStats(newStats);
+    if (!stats) {
+      setStats(initialStats);
       hydratedRef.current = true;
       return;
     }
 
-    const decodedSolution = last.solution
-      ? decodeSolution(last.solution)
+    const decodedSolution = stats.solution
+      ? decodeSolution(stats.solution)
       : null;
 
     const sameGame = _.isEqual(solution, decodedSolution);
 
     if (sameGame) {
-      setCurrentTry(last.currentTry ?? 0);
+      const answeredGuesses = normalizeAnsweredGuesses(stats.guesses);
+      const hydratedGuesses = makeEmptyGuesses();
 
-      setGuesses(
-        Array.isArray(last.guesses)
-          ? last.guesses
-          : (Array.from({ length: 6 }).fill(initialGuess) as GuessType[])
+      answeredGuesses.forEach((guess, index) => {
+        hydratedGuesses[index] = guess;
+      });
+
+      const normalizedCurrentTry = Math.min(
+        answeredGuesses.length,
+        Math.max(0, stats.currentTry ?? 0)
       );
 
-      setDidGuess(!!last.didGuess);
-    } else {
-      const newStats = [
+      setCurrentTry(normalizedCurrentTry);
+      setGuesses(hydratedGuesses);
+      setDidGuess(!!stats.didGuess);
+      setStats({
         ...stats,
-        {
-          solution: encodeSolution(solution),
-          currentTry: 0,
-          didGuess: false,
-          guesses: Array.from({ length: 6 }).fill(initialGuess),
-        },
-      ];
-
-      setStats(newStats);
+        currentTry: normalizedCurrentTry,
+        guesses: answeredGuesses,
+      });
+    } else {
+      setStats(initialStats);
       setCurrentTry(0);
-      setGuesses(
-        Array.from({ length: 6 }).fill(initialGuess) as GuessType[]
-      );
+      setGuesses(makeEmptyGuesses());
       setDidGuess(false);
     }
 
@@ -147,25 +183,26 @@ export function useGameState({ solution, persist }: UseGameStateOptions) {
     }
 
     setStats((prev) => {
-      if (!Array.isArray(prev)) return [];
+      if (!prev) return prev;
 
-      const copy = [...prev];
-      const last = copy.at(-1);
-
-      if (!last) return copy;
-
-      last.currentTry = currentTry;
-      last.didGuess = didGuess;
-      last.guesses = guesses;
-
-      return copy;
+      return {
+        ...prev,
+        currentTry,
+        didGuess,
+        guesses: guesses.filter(isAnsweredGuess),
+      };
     });
   }, [guesses, currentTry, didGuess, persist]);
 
   React.useEffect(() => {
     if (!persist) return;
     if (!hydratedRef.current) return;
-    localStorage.setItem("stats", JSON.stringify(stats || []));
+    if (!stats) {
+      localStorage.removeItem("stats");
+      return;
+    }
+
+    localStorage.setItem("stats", JSON.stringify(stats));
   }, [stats, persist]);
 
   const skip = React.useCallback(() => {
@@ -216,9 +253,7 @@ export function useGameState({ solution, persist }: UseGameStateOptions) {
   }, [selectedSong, solution, currentTry, didGuess, guesses.length]);
 
   const reset = React.useCallback(() => {
-    setGuesses(
-      Array.from({ length: 6 }).fill(initialGuess) as GuessType[]
-    );
+    setGuesses(makeEmptyGuesses());
     setCurrentTry(0);
     setSelectedSong(undefined);
     setDidGuess(false);

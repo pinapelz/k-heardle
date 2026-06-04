@@ -45,7 +45,7 @@ export function Game({
 }: Props) {
   const [sessionDate] = React.useState(() => getUtcDate());
   const recentFinishedPlay = localStorage.getItem("recentFinishedPlay");
-  const hasFinishedCurrentRound = didGuess || currentTry >= guesses.length;
+  const hasFinishedCurrentRound = didGuess || currentTry >= guesses.length || (recentFinishedPlay === sessionDate && mode === "daily");
   const isGameOver = hasFinishedCurrentRound;
   const isBlocked =
     mode === "daily" &&
