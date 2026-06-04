@@ -20,6 +20,18 @@ interface Props {
   onPlayAgain?: () => void;
 }
 
+function getUtcDate() {
+  return new Date().toISOString().split("T")[0];
+}
+
+function checkDailyIsGenerated(): boolean {
+  const CDN_URL = import.meta.env.VITE_CDN_URL;
+  if (!CDN_URL) return false;
+
+  const date = getUtcDate();
+  return !!localStorage.getItem(`${CDN_URL}/${date}.mp3`);
+}
+
 export function Game({
   guesses,
   todaysSolution,
@@ -31,7 +43,26 @@ export function Game({
   mode = "daily",
   onPlayAgain,
 }: Props) {
-  if (didGuess || currentTry === 6) {
+  const [sessionDate] = React.useState(() => getUtcDate());
+  const isGameOver = didGuess || currentTry === 6;
+  const recentFinishedPlay = localStorage.getItem("recentFinishedPlay");
+  const isBlocked =
+    mode === "daily" &&
+    !!recentFinishedPlay &&
+    new Date(sessionDate) > new Date(recentFinishedPlay) &&
+    !checkDailyIsGenerated();
+
+  React.useEffect(() => {
+    if (!isGameOver) return;
+
+    localStorage.setItem("recentFinishedPlay", sessionDate);
+  }, [isGameOver, sessionDate]);
+
+  if (isBlocked) {
+    return <h1>Daily MIXX is not available yet. Check back soon!</h1>;
+  }
+
+  if (isGameOver) {
     return (
       <Result
         didGuess={didGuess}
@@ -43,6 +74,7 @@ export function Game({
       />
     );
   }
+
   return (
     <>
       {guesses.map((guess: GuessType, index) => (
@@ -55,7 +87,6 @@ export function Game({
       )}
 
       <Search currentTry={currentTry} setSelectedSong={setSelectedSong} />
-
       <Styled.Buttons>
         <Button onClick={skip}>
           {currentTry === 5
