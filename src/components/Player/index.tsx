@@ -20,7 +20,7 @@ export function Player({ currentTry }: Props) {
   const [isReady, setIsReady] = React.useState(false);
 
   const CDN_URL =
-    import.meta.env.VITE_CDN_URL || "https://yena.pinapelz.com/kheardle";
+    import.meta.env.VITE_CDN_URL || "localhost";
 
   const dateString = new Date().toISOString().split("T")[0];
 

@@ -1,6 +1,5 @@
 import express from 'express';
 import { songs } from './data/songs';
-import { startDate } from './data/startDate';
 import cors from 'cors';
 import dotenv from 'dotenv';
 dotenv.config();
@@ -61,10 +60,6 @@ app.get('/select', (_req, res) => {
 
 app.get('/songs', (_req, res) => {
   res.json(songs.map(({ artist, name }) => ({ artist, name })));
-});
-
-app.get('/info', (_req, res) => {
-  res.json({ startDate: startDate.toISOString() });
 });
 
 
