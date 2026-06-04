@@ -22,7 +22,7 @@ export const Content = styled.div`
     }
   }
 
-  a { color: ${({ theme }) => theme.text}; }
+  a { text-decoration: none; color: ${({ theme }) => theme.text}; }
 `;
 
 export const Logo = styled.h1`
