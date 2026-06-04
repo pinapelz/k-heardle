@@ -1,4 +1,6 @@
 import express from 'express';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
+import path from 'path';
 import { songs } from './data/songs';
 import cors from 'cors';
 import dotenv from 'dotenv';
@@ -10,6 +12,12 @@ app.use(express.json());
 
 const SERVER_PORT = process.env.SERVER_PORT || 3001;
 const SALT = process.env.VITE_HEARDLE_SALT ?? 'changeme';
+const DAILY_SONGS_FILE = path.resolve(
+  process.env.DAILY_SONGS_FILE ?? 'server/data/daily-songs.json',
+);
+
+type Song = (typeof songs)[number];
+type DailySongs = Record<string, Song>;
 
 function getObfuscationKey(): Buffer {
   const date = new Date().toISOString().split('T')[0];
@@ -35,11 +43,38 @@ function hashString(str: string): number {
   return hash;
 }
 
-app.get('/today', (_req, res) => {
-  const date = getUtcDate();
+function readDailySongs(): DailySongs {
+  if (!existsSync(DAILY_SONGS_FILE)) {
+    return {};
+  }
+
+  return JSON.parse(readFileSync(DAILY_SONGS_FILE, 'utf8')) as DailySongs;
+}
+
+function writeDailySongs(dailySongs: DailySongs): void {
+  mkdirSync(path.dirname(DAILY_SONGS_FILE), { recursive: true });
+  writeFileSync(DAILY_SONGS_FILE, JSON.stringify(dailySongs, null, 2));
+}
+
+function getDailySong(date: string): Song {
+  const dailySongs = readDailySongs();
+  const savedSong = dailySongs[date];
+
+  if (savedSong) {
+    return savedSong;
+  }
+
   const seed = hashString(date);
   const index = seed % songs.length;
   const song = songs[index];
+  dailySongs[date] = song;
+  writeDailySongs(dailySongs);
+  return song;
+}
+
+app.get('/today', (_req, res) => {
+  const date = getUtcDate();
+  const song = getDailySong(date);
   const obfuscationKey = getObfuscationKey();
   const songJson = JSON.stringify(song);
   const obfuscatedData = xorBuffer(Buffer.from(songJson, 'utf8'), obfuscationKey);

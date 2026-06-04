@@ -10,6 +10,7 @@ notes.txt
 playlist*.js
 urls*.txt
 urls*.js
+server/data/daily-songs.json
 
 # JavaScript
 # dependencies
