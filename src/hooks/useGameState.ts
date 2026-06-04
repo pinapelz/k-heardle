@@ -14,117 +14,181 @@ const initialGuess: GuessType = {
   state: undefined,
 };
 
+const SALT = import.meta.env.VITE_HEARDLE_SALT || "changeme";
+
+const getKey = (salt: string) => {
+  let key = 0;
+  for (let i = 0; i < salt.length; i++) {
+    key = (key + salt.charCodeAt(i)) % 256;
+  }
+  return key;
+};
+
+const KEY = getKey(SALT);
+function loadStats() {
+  try {
+    const raw = localStorage.getItem("stats");
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+const encodeSolution = (solution: Song) => {
+  const json = JSON.stringify(solution);
+
+  const xored = json
+    .split("")
+    .map((c) => String.fromCharCode(c.charCodeAt(0) ^ KEY))
+    .join("");
+
+  return btoa(xored);
+};
+
+const decodeSolution = (value: string): Song | null => {
+  try {
+    const decoded = atob(value);
+
+    const json = decoded
+      .split("")
+      .map((c) => String.fromCharCode(c.charCodeAt(0) ^ KEY))
+      .join("");
+
+    return JSON.parse(json);
+  } catch {
+    return null;
+  }
+};
+
 export function useGameState({ solution, persist }: UseGameStateOptions) {
   const [guesses, setGuesses] = React.useState<GuessType[]>(
     Array.from({ length: 6 }).fill(initialGuess) as GuessType[]
   );
-  const [currentTry, setCurrentTry] = React.useState<number>(0);
-  const [selectedSong, setSelectedSong] = React.useState<Song>();
-  const [didGuess, setDidGuess] = React.useState<boolean>(false);
 
-  // --- localStorage persistence (daily mode) ---
-  let stats = JSON.parse(localStorage.getItem("stats") || "{}");
-  let statsVersion = JSON.parse(localStorage.getItem("version") || "1");
+  const [currentTry, setCurrentTry] = React.useState(0);
+  const [selectedSong, setSelectedSong] = React.useState<Song>();
+  const [didGuess, setDidGuess] = React.useState(false);
+
+  const [stats, setStats] = React.useState<any[]>(() => loadStats());
+
+  const hydratedRef = React.useRef(false);
+  const skipNextStatsSyncRef = React.useRef(false);
 
   React.useEffect(() => {
     if (!persist || !solution) return;
+    if (hydratedRef.current) return;
 
-    if (Array.isArray(stats)) {
-      const visitedToday = _.isEqual(
-        solution,
-        stats[stats.length - 1].solution
+    skipNextStatsSyncRef.current = true;
+
+    const last = stats.at(-1);
+
+    if (!last) {
+      const newStats = [
+        ...stats,
+        {
+          solution: encodeSolution(solution),
+          currentTry: 0,
+          didGuess: false,
+          guesses: Array.from({ length: 6 }).fill(initialGuess),
+        },
+      ];
+
+      setStats(newStats);
+      hydratedRef.current = true;
+      return;
+    }
+
+    const decodedSolution = last.solution
+      ? decodeSolution(last.solution)
+      : null;
+
+    const sameGame = _.isEqual(solution, decodedSolution);
+
+    if (sameGame) {
+      setCurrentTry(last.currentTry ?? 0);
+
+      setGuesses(
+        Array.isArray(last.guesses)
+          ? last.guesses
+          : (Array.from({ length: 6 }).fill(initialGuess) as GuessType[])
       );
 
-      if (!visitedToday) {
-        stats.push({
-          solution: solution,
-          currentTry: 0,
-          didGuess: 0,
-        });
-      } else {
-        const { currentTry, guesses, didGuess } = stats[stats.length - 1];
-        setCurrentTry(currentTry);
-        setGuesses(guesses);
-        setDidGuess(didGuess);
-      }
+      setDidGuess(!!last.didGuess);
     } else {
-      stats = [];
-      stats.push({
-        solution: solution,
-      });
+      const newStats = [
+        ...stats,
+        {
+          solution: encodeSolution(solution),
+          currentTry: 0,
+          didGuess: false,
+          guesses: Array.from({ length: 6 }).fill(initialGuess),
+        },
+      ];
+
+      setStats(newStats);
+      setCurrentTry(0);
+      setGuesses(
+        Array.from({ length: 6 }).fill(initialGuess) as GuessType[]
+      );
+      setDidGuess(false);
     }
 
-    const currentVersion = 2;
-    const firstRun = localStorage.getItem("firstRun") === null;
-    if (firstRun) {
-      statsVersion = currentVersion;
-    } else if (statsVersion < currentVersion) {
-      statsVersion = currentVersion;
-      if (Array.isArray(stats)) {
-        for (let index = 0; index < stats.length; index++) {
-          const newGuesses: GuessType[] = [];
-          for (
-            let guessIndex = 0;
-            guessIndex < stats[index].guesses.length;
-            guessIndex++
-          ) {
-            const guess = stats[index].guesses[guessIndex];
-            if (guess.skipped !== undefined) {
-              let state = undefined;
-              if (guess.skipped) {
-                state = GuessState.Skipped;
-              } else if (guess.isCorrect) {
-                state = GuessState.Correct;
-              } else if (guess.isCorrect === false) {
-                state = GuessState.Incorrect;
-              }
-              newGuesses.push({
-                song: guess.song,
-                state: state,
-              } as GuessType);
-            }
-          }
-          stats[index].guesses = newGuesses;
-        }
-      }
-    }
-  }, [solution]);
+    hydratedRef.current = true;
+  }, [solution, persist]);
 
   React.useEffect(() => {
     if (!persist) return;
-    if (Array.isArray(stats)) {
-      stats[stats.length - 1].currentTry = currentTry;
-      stats[stats.length - 1].didGuess = didGuess;
-      stats[stats.length - 1].guesses = guesses;
+    if (!hydratedRef.current) return;
+
+    if (skipNextStatsSyncRef.current) {
+      skipNextStatsSyncRef.current = false;
+      return;
     }
-  }, [guesses, currentTry, didGuess]);
+
+    setStats((prev) => {
+      if (!Array.isArray(prev)) return [];
+
+      const copy = [...prev];
+      const last = copy.at(-1);
+
+      if (!last) return copy;
+
+      last.currentTry = currentTry;
+      last.didGuess = didGuess;
+      last.guesses = guesses;
+
+      return copy;
+    });
+  }, [guesses, currentTry, didGuess, persist]);
 
   React.useEffect(() => {
     if (!persist) return;
-    localStorage.setItem("stats", JSON.stringify(stats));
-  }, [stats]);
-
-  React.useEffect(() => {
-    if (!persist) return;
-    localStorage.setItem("version", JSON.stringify(statsVersion));
-  }, [statsVersion]);
+    if (!hydratedRef.current) return;
+    localStorage.setItem("stats", JSON.stringify(stats || []));
+  }, [stats, persist]);
 
   const skip = React.useCallback(() => {
-    setGuesses((guesses: GuessType[]) => {
-      const newGuesses = [...guesses];
-      newGuesses[currentTry] = {
+    if (didGuess || currentTry >= guesses.length) return;
+
+    setGuesses((prev) => {
+      const copy = [...prev];
+      copy[currentTry] = {
         song: undefined,
         state: GuessState.Skipped,
       };
-      return newGuesses;
+      return copy;
     });
-    setCurrentTry((currentTry) => currentTry + 1);
-  }, [currentTry]);
+
+    setCurrentTry((t) => t + 1);
+  }, [currentTry, didGuess, guesses.length]);
 
   const guess = React.useCallback(() => {
     if (!selectedSong || !solution) return;
+    if (didGuess || currentTry >= guesses.length) return;
 
     let state = GuessState.Incorrect;
+
     if (
       selectedSong.artist === solution.artist &&
       selectedSong.name === solution.name
@@ -134,22 +198,22 @@ export function useGameState({ solution, persist }: UseGameStateOptions) {
       state = GuessState.PartiallyCorrect;
     }
 
-    setGuesses((guesses: GuessType[]) => {
-      const newGuesses = [...guesses];
-      newGuesses[currentTry] = {
+    setGuesses((prev) => {
+      const copy = [...prev];
+      copy[currentTry] = {
         song: selectedSong,
-        state: state,
+        state,
       };
-      return newGuesses;
+      return copy;
     });
 
-    setCurrentTry((currentTry) => currentTry + 1);
+    setCurrentTry((t) => t + 1);
     setSelectedSong(undefined);
 
     if (state === GuessState.Correct) {
       setDidGuess(true);
     }
-  }, [guesses, selectedSong, solution]);
+  }, [selectedSong, solution, currentTry, didGuess, guesses.length]);
 
   const reset = React.useCallback(() => {
     setGuesses(

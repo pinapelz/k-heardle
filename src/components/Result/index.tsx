@@ -100,14 +100,17 @@ export function Result({
   mode = "daily",
   onPlayAgain,
 }: Props) {
-  const hoursToNextDay = Math.floor(
-    (new Date(new Date().setHours(24, 0, 0, 0)).getTime() -
-      new Date().getTime()) /
-      1000 /
-      60 /
-      60
+  const now = new Date();
+  const nextUtcMidnight = Date.UTC(
+    now.getUTCFullYear(),
+    now.getUTCMonth(),
+    now.getUTCDate() + 1,
+    0, 0, 0
   );
 
+  const hoursToNextDay = Math.floor(
+    (nextUtcMidnight - now.getTime()) / 1000 / 60 / 60
+  );
   const isUnlimited = mode === "unlimited";
 
   if (didGuess) {

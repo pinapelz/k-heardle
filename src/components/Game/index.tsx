@@ -44,8 +44,9 @@ export function Game({
   onPlayAgain,
 }: Props) {
   const [sessionDate] = React.useState(() => getUtcDate());
-  const isGameOver = didGuess || currentTry === 6;
   const recentFinishedPlay = localStorage.getItem("recentFinishedPlay");
+  const hasFinishedCurrentRound = didGuess || currentTry >= guesses.length;
+  const isGameOver = hasFinishedCurrentRound;
   const isBlocked =
     mode === "daily" &&
     !!recentFinishedPlay &&
@@ -53,10 +54,11 @@ export function Game({
     !checkDailyIsGenerated();
 
   React.useEffect(() => {
-    if (!isGameOver) return;
+    if (mode !== "daily") return;
+    if (!hasFinishedCurrentRound) return;
 
     localStorage.setItem("recentFinishedPlay", sessionDate);
-  }, [isGameOver, sessionDate]);
+  }, [mode, hasFinishedCurrentRound, sessionDate]);
 
   if (isBlocked) {
     return <h1>Daily MIXX is not available yet. Check back soon!</h1>;
