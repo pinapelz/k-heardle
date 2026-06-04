@@ -2,7 +2,6 @@ export const songs = [
   { artist: "LE SSERAFIM", name: "iffy iffy", youtubeId: "nMx-tMPidK4" },
   { artist: "LE SSERAFIM", name: "Creatures", youtubeId: "Z9hoSCbKTmw" },
   { artist: "LE SSERAFIM", name: "Sonder", youtubeId: "Bjf4F_rBvig" },
-  { artist: "LE SSERAFIM", name: "Liminal Space", youtubeId: "s7tLgx1VDhE" },
   { artist: "LE SSERAFIM", name: "CELEBRATION", youtubeId: "7WuO_XaXsCY" },
   { artist: "LE SSERAFIM", name: "Trust Exercise", youtubeId: "riLpx8N4FGI" },
   { artist: "LE SSERAFIM", name: "Saki", youtubeId: "uNvewjHnHzM" },
