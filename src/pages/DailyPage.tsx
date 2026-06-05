@@ -1,8 +1,7 @@
 import React from "react";
 
-import { Song } from "../types/song";
 import { GuessType } from "../types/guess";
-import { getDailySolution } from "../helpers/fetchSolution";
+import { DailySolution, getDailySolution } from "../helpers/fetchSolution";
 import { useGameState } from "../hooks/useGameState";
 
 import { Header, InfoPopUp, Game, Footer } from "../components";
@@ -10,7 +9,7 @@ import { Header, InfoPopUp, Game, Footer } from "../components";
 import * as Styled from "../app.styled";
 
 export function DailyPage() {
-  const [todaysSolution, setTodaysSolution] = React.useState<Song | null>(null);
+  const [todaysSolution, setTodaysSolution] = React.useState<DailySolution | null>(null);
 
   const firstRun = localStorage.getItem("firstRun") === null;
 
@@ -70,7 +69,7 @@ export function DailyPage() {
     didGuess,
     skip,
     guess,
-  } = useGameState({ solution: todaysSolution, persist: true });
+  } = useGameState({ solution: todaysSolution?.song ?? null, persist: true });
 
   const [isInfoPopUpOpen, setIsInfoPopUpOpen] =
     React.useState<boolean>(firstRun);
@@ -98,7 +97,8 @@ export function DailyPage() {
         <Game
           guesses={guesses}
           didGuess={didGuess}
-          todaysSolution={todaysSolution}
+          todaysSolution={todaysSolution.song}
+          dailyDate={todaysSolution.date}
           currentTry={currentTry}
           setSelectedSong={setSelectedSong}
           skip={skip}

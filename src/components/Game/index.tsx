@@ -11,6 +11,7 @@ import * as Styled from "./index.styled";
 interface Props {
   guesses: GuessType[];
   todaysSolution: Song;
+  dailyDate?: string;
   currentTry: number;
   didGuess: boolean;
   setSelectedSong: React.Dispatch<React.SetStateAction<Song | undefined>>;
@@ -24,17 +25,10 @@ function getUtcDate() {
   return new Date().toISOString().split("T")[0];
 }
 
-function checkDailyIsGenerated(): boolean {
-  const CDN_URL = import.meta.env.VITE_CDN_URL;
-  if (!CDN_URL) return false;
-
-  const date = getUtcDate();
-  return !!localStorage.getItem(`${CDN_URL}/${date}.mp3`);
-}
-
 export function Game({
   guesses,
   todaysSolution,
+  dailyDate,
   currentTry,
   didGuess,
   setSelectedSong,
@@ -43,22 +37,23 @@ export function Game({
   mode = "daily",
   onPlayAgain,
 }: Props) {
-  const [sessionDate] = React.useState(() => getUtcDate());
   const recentFinishedPlay = localStorage.getItem("recentFinishedPlay");
   const hasFinishedCurrentRound = didGuess || currentTry >= guesses.length;
-  const isGameOver = hasFinishedCurrentRound;
+  const hasFinishedResponseDaily =
+    mode === "daily" && !!dailyDate && recentFinishedPlay === dailyDate;
+  const isGameOver = hasFinishedCurrentRound || hasFinishedResponseDaily;
   const isBlocked =
     mode === "daily" &&
-    !!recentFinishedPlay &&
-    new Date(sessionDate) > new Date(recentFinishedPlay) &&
-    !checkDailyIsGenerated();
+    !!dailyDate &&
+    !hasFinishedResponseDaily &&
+    new Date(getUtcDate()) > new Date(dailyDate);
 
   React.useEffect(() => {
     if (mode !== "daily") return;
     if (!hasFinishedCurrentRound) return;
 
-    localStorage.setItem("recentFinishedPlay", sessionDate);
-  }, [mode, hasFinishedCurrentRound, sessionDate]);
+    localStorage.setItem("recentFinishedPlay", dailyDate ?? getUtcDate());
+  }, [mode, hasFinishedCurrentRound, dailyDate]);
 
   if (isBlocked) {
     return <h1>Daily MIXX is not available yet. Check back soon!</h1>;

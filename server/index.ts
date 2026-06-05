@@ -19,8 +19,7 @@ const DAILY_SONGS_FILE = path.resolve(
 type Song = (typeof songs)[number];
 type DailySongs = Record<string, Song>;
 
-function getObfuscationKey(): Buffer {
-  const date = new Date().toISOString().split('T')[0];
+function getObfuscationKey(date = getUtcDate()): Buffer {
   return Buffer.from(SALT + date);
 }
 
@@ -75,10 +74,11 @@ function getDailySong(date: string): Song {
 app.get('/today', (_req, res) => {
   const date = getUtcDate();
   const song = getDailySong(date);
-  const obfuscationKey = getObfuscationKey();
+  const obfuscationKey = getObfuscationKey(date);
   const songJson = JSON.stringify(song);
   const obfuscatedData = xorBuffer(Buffer.from(songJson, 'utf8'), obfuscationKey);
   res.json({
+    date,
     data: obfuscatedData.toString('hex'),
   });
 });

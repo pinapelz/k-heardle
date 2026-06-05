@@ -33,6 +33,7 @@ export function Player({ currentTry }: Props) {
   const [play, setPlay] = React.useState(false);
   const [currentTime, setCurrentTime] = React.useState(0);
   const [isReady, setIsReady] = React.useState(false);
+  const [isUnavailable, setIsUnavailable] = React.useState(false);
   const [volume, setVolume] = React.useState(loadVolume);
 
   const CDN_URL =
@@ -65,12 +66,21 @@ export function Player({ currentTry }: Props) {
   );
 
   React.useEffect(() => {
+    setIsReady(false);
+    setIsUnavailable(false);
+
     const audio = new Audio(`${CDN_URL}/${dateString}.mp3`);
     audio.volume = loadVolume();
     audioRef.current = audio;
 
     audio.addEventListener("loadeddata", () => {
       setIsReady(true);
+      setIsUnavailable(false);
+    });
+
+    audio.addEventListener("error", () => {
+      setIsReady(false);
+      setIsUnavailable(true);
     });
 
     audio.addEventListener("timeupdate", () => {
@@ -138,7 +148,9 @@ export function Player({ currentTry }: Props) {
 
   return (
     <>
-      {isReady ? (
+      {isUnavailable ? (
+        <p>We are still generating the audio! Come back later.</p>
+      ) : isReady ? (
         <>
           <Styled.ProgressBackground>
             {currentTime !== 0 && (

@@ -20,25 +20,32 @@ function xor(data: Uint8Array, key: Uint8Array): Uint8Array {
   return output;
 }
 
-function getObfuscationKey(): Uint8Array {
-  const date = new Date().toISOString().split('T')[0];
+function getObfuscationKey(date = new Date().toISOString().split('T')[0]): Uint8Array {
   return new TextEncoder().encode(SALT + date);
 }
 
-function decryptResponse(data: string): Song {
-  const obfuscationKey = getObfuscationKey();
+function decryptResponse(data: string, date?: string): Song {
+  const obfuscationKey = getObfuscationKey(date);
   const obfuscatedBytes = hexToBytes(data);
   const decrypted = xor(obfuscatedBytes, obfuscationKey);
   return JSON.parse(new TextDecoder().decode(decrypted)) as Song;
 }
 
-export async function getDailySolution(): Promise<Song> {
+export interface DailySolution {
+  date: string;
+  song: Song;
+}
+
+export async function getDailySolution(): Promise<DailySolution> {
   const solutionData = await fetch(`${API_URL}/today`);
   if (!solutionData.ok) {
     throw new Error(`Failed to fetch solution: ${solutionData.statusText}`);
   }
-  const { data } = await solutionData.json();
-  return decryptResponse(data);
+  const { data, date } = await solutionData.json();
+  return {
+    date,
+    song: decryptResponse(data, date),
+  };
 }
 
 export async function getSelectSolution(): Promise<Song> {
