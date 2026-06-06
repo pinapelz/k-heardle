@@ -19,13 +19,6 @@ interface PersistedStatsV2 extends DailyGameState {
   sessionToken: string;
 }
 
-interface LegacyStatsV0 {
-  date: string;
-  currentTry: number;
-  didGuess: boolean;
-  guesses: GuessType[];
-}
-
 type PersistedStats = PersistedStatsV2;
 
 const initialGuess: GuessType = {
@@ -62,23 +55,12 @@ function loadStats(): PersistedStats | null {
       "guesses" in parsed &&
       !("sig" in parsed);
 
-    if (isLegacyV0) {
-      const legacy = parsed as LegacyStatsV0;
+    const isLegacyVersion =
+      typeof parsed.version === "number" && parsed.version < STATE_VERSION;
 
-      const upgraded: PersistedStats = {
-        version: STATE_VERSION,
-        date: legacy.date,
-        currentTry: Math.max(
-          0,
-          Math.min(6, Math.floor(legacy.currentTry || 0))
-        ),
-        didGuess: !!legacy.didGuess,
-        guesses: normalizeAnsweredGuesses(legacy.guesses),
-        sig: "",
-        sessionToken: "",
-      };
-
-      return upgraded;
+    if (isLegacyV0 || isLegacyVersion) {
+      localStorage.clear();
+      return null;
     }
 
     const currentTry =
@@ -89,7 +71,7 @@ function loadStats(): PersistedStats | null {
     const normalizedGuesses = normalizeAnsweredGuesses(parsed.guesses);
 
     return {
-      version: typeof parsed.version === "number" ? parsed.version : STATE_VERSION,
+      version: STATE_VERSION,
       date: typeof parsed.date === "string" ? parsed.date : "",
       currentTry: Math.min(currentTry, normalizedGuesses.length),
       didGuess: !!parsed.didGuess,
