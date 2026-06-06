@@ -1,16 +1,16 @@
 import { Song } from "../types/song";
+import { GuessState, GuessType } from "../types/guess";
 
-const SALT = import.meta.env.VITE_HEARDLE_SALT ?? 'changeme';
-const API_URL = import.meta.env.VITE_HEARDLE_API_URL ?? 'http://localhost:3001';
+const SALT = import.meta.env.VITE_HEARDLE_SALT ?? "changeme";
+const API_URL = import.meta.env.VITE_HEARDLE_API_URL ?? "http://localhost:3001";
 
 function hexToBytes(hex: string): Uint8Array {
   const bytes = new Uint8Array(hex.length / 2);
   for (let i = 0; i < hex.length; i += 2) {
     bytes[i / 2] = parseInt(hex.slice(i, i + 2), 16);
   }
-return bytes;
+  return bytes;
 }
-
 
 function xor(data: Uint8Array, key: Uint8Array): Uint8Array {
   const output = new Uint8Array(data.length);
@@ -20,7 +20,7 @@ function xor(data: Uint8Array, key: Uint8Array): Uint8Array {
   return output;
 }
 
-function getObfuscationKey(date = new Date().toISOString().split('T')[0]): Uint8Array {
+function getObfuscationKey(date = new Date().toISOString().split("T")[0]): Uint8Array {
   return new TextEncoder().encode(SALT + date);
 }
 
@@ -34,6 +34,33 @@ function decryptResponse(data: string, date?: string): Song {
 export interface DailySolution {
   date: string;
   song: Song;
+  sessionToken: string;
+  initialSig: string;
+}
+
+export interface DailyGameState {
+  date: string;
+  currentTry: number;
+  didGuess: boolean;
+  guesses: GuessType[];
+}
+
+interface SongGuessPayload {
+  artist: string;
+  name: string;
+}
+
+interface SubmitDailyGuessRequest {
+  sessionToken: string;
+  state: DailyGameState;
+  sig: string;
+  guess?: SongGuessPayload | null;
+}
+
+interface SubmitDailyGuessResponse {
+  state: DailyGameState;
+  sig: string;
+  guessState: GuessState;
 }
 
 export async function getDailySolution(): Promise<DailySolution> {
@@ -41,11 +68,31 @@ export async function getDailySolution(): Promise<DailySolution> {
   if (!solutionData.ok) {
     throw new Error(`Failed to fetch solution: ${solutionData.statusText}`);
   }
-  const { data, date } = await solutionData.json();
+  const { data, date, sessionToken, initialSig } = await solutionData.json();
   return {
     date,
+    sessionToken,
+    initialSig,
     song: decryptResponse(data, date),
   };
+}
+
+export async function submitDailyGuess(
+  payload: SubmitDailyGuessRequest
+): Promise<SubmitDailyGuessResponse> {
+  const response = await fetch(`${API_URL}/guess`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to submit guess: ${response.statusText}`);
+  }
+
+  return (await response.json()) as SubmitDailyGuessResponse;
 }
 
 export async function getSelectSolution(): Promise<Song> {

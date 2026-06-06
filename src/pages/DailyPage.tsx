@@ -69,7 +69,13 @@ export function DailyPage() {
     didGuess,
     skip,
     guess,
-  } = useGameState({ solution: todaysSolution?.song ?? null, persist: true });
+  } = useGameState({
+    solution: todaysSolution?.song ?? null,
+    persist: true,
+    sessionDate: todaysSolution?.date,
+    sessionToken: todaysSolution?.sessionToken,
+    initialSig: todaysSolution?.initialSig,
+  });
 
   const [isInfoPopUpOpen, setIsInfoPopUpOpen] =
     React.useState<boolean>(firstRun);

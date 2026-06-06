@@ -1,20 +1,32 @@
 import React from "react";
-import _ from "lodash";
-
 import { Song } from "../types/song";
 import { GuessState, GuessType } from "../types/guess";
+import { DailyGameState, submitDailyGuess } from "../helpers/fetchSolution";
 
 interface UseGameStateOptions {
   solution: Song | null;
   persist: boolean;
+  sessionDate?: string;
+  sessionToken?: string;
+  initialSig?: string;
 }
 
-interface PersistedStats {
-  solution: string;
+const STATE_VERSION = 2;
+
+interface PersistedStatsV2 extends DailyGameState {
+  version: number;
+  sig: string;
+  sessionToken: string;
+}
+
+interface LegacyStatsV0 {
+  date: string;
   currentTry: number;
   didGuess: boolean;
   guesses: GuessType[];
 }
+
+type PersistedStats = PersistedStatsV2;
 
 const initialGuess: GuessType = {
   song: undefined,
@@ -29,22 +41,9 @@ const isAnsweredGuess = (guess: GuessType | undefined | null) =>
 
 const normalizeAnsweredGuesses = (guesses: unknown): GuessType[] => {
   if (!Array.isArray(guesses)) return [];
-  if (guesses.some((guess) => Array.isArray(guess))) return [];
-
+  if (guesses.some((g) => Array.isArray(g))) return [];
   return (guesses as GuessType[]).filter(isAnsweredGuess).slice(0, 6);
 };
-
-const SALT = import.meta.env.VITE_HEARDLE_SALT || "changeme";
-
-const getKey = (salt: string) => {
-  let key = 0;
-  for (let i = 0; i < salt.length; i++) {
-    key = (key + salt.charCodeAt(i)) % 256;
-  }
-  return key;
-};
-
-const KEY = getKey(SALT);
 
 function loadStats(): PersistedStats | null {
   try {
@@ -52,10 +51,34 @@ function loadStats(): PersistedStats | null {
     if (!raw) return null;
 
     const parsed = JSON.parse(raw);
-
-    if (!parsed || Array.isArray(parsed) || typeof parsed !== "object") {
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
       localStorage.removeItem("stats");
       return null;
+    }
+
+    const isLegacyV0 =
+      !("version" in parsed) &&
+      "date" in parsed &&
+      "guesses" in parsed &&
+      !("sig" in parsed);
+
+    if (isLegacyV0) {
+      const legacy = parsed as LegacyStatsV0;
+
+      const upgraded: PersistedStats = {
+        version: STATE_VERSION,
+        date: legacy.date,
+        currentTry: Math.max(
+          0,
+          Math.min(6, Math.floor(legacy.currentTry || 0))
+        ),
+        didGuess: !!legacy.didGuess,
+        guesses: normalizeAnsweredGuesses(legacy.guesses),
+        sig: "",
+        sessionToken: "",
+      };
+
+      return upgraded;
     }
 
     const currentTry =
@@ -63,140 +86,106 @@ function loadStats(): PersistedStats | null {
         ? Math.max(0, Math.min(6, Math.floor(parsed.currentTry)))
         : 0;
 
-    const normalized: PersistedStats = {
-      solution: typeof parsed.solution === "string" ? parsed.solution : "",
-      currentTry,
-      didGuess: !!parsed.didGuess,
-      guesses: normalizeAnsweredGuesses(parsed.guesses),
-    };
+    const normalizedGuesses = normalizeAnsweredGuesses(parsed.guesses);
 
-    return normalized;
+    return {
+      version: typeof parsed.version === "number" ? parsed.version : STATE_VERSION,
+      date: typeof parsed.date === "string" ? parsed.date : "",
+      currentTry: Math.min(currentTry, normalizedGuesses.length),
+      didGuess: !!parsed.didGuess,
+      guesses: normalizedGuesses,
+      sig: typeof parsed.sig === "string" ? parsed.sig : "",
+      sessionToken:
+        typeof parsed.sessionToken === "string" ? parsed.sessionToken : "",
+    };
   } catch {
     localStorage.removeItem("stats");
     return null;
   }
 }
 
-const encodeSolution = (solution: Song) => {
-  const json = JSON.stringify(solution);
-
-  const xored = json
-    .split("")
-    .map((c) => String.fromCharCode(c.charCodeAt(0) ^ KEY))
-    .join("");
-
-  return btoa(xored);
-};
-
-const decodeSolution = (value: string): Song | null => {
-  try {
-    const decoded = atob(value);
-
-    const json = decoded
-      .split("")
-      .map((c) => String.fromCharCode(c.charCodeAt(0) ^ KEY))
-      .join("");
-
-    return JSON.parse(json);
-  } catch {
-    return null;
-  }
-};
-
-export function useGameState({ solution, persist }: UseGameStateOptions) {
+export function useGameState({
+  solution,
+  persist,
+  sessionDate,
+  sessionToken,
+  initialSig,
+}: UseGameStateOptions) {
   const [guesses, setGuesses] = React.useState<GuessType[]>(makeEmptyGuesses());
-
   const [currentTry, setCurrentTry] = React.useState(0);
   const [selectedSong, setSelectedSong] = React.useState<Song>();
   const [didGuess, setDidGuess] = React.useState(false);
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
 
   const [stats, setStats] = React.useState<PersistedStats | null>(() =>
     loadStats()
   );
 
   const hydratedRef = React.useRef(false);
-  const skipNextStatsSyncRef = React.useRef(false);
 
   React.useEffect(() => {
-    if (!persist || !solution) return;
+    if (!persist) return;
     if (hydratedRef.current) return;
+    if (!sessionDate || !sessionToken || !initialSig) return;
 
-    skipNextStatsSyncRef.current = true;
-
-    const initialStats: PersistedStats = {
-      solution: encodeSolution(solution),
+    const baseStats: PersistedStats = {
+      version: STATE_VERSION,
+      date: sessionDate,
       currentTry: 0,
       didGuess: false,
       guesses: [],
+      sig: initialSig,
+      sessionToken,
     };
 
     if (!stats) {
-      setStats(initialStats);
+      setStats(baseStats);
+      setCurrentTry(0);
+      setGuesses(makeEmptyGuesses());
+      setDidGuess(false);
       hydratedRef.current = true;
       return;
     }
 
-    const decodedSolution = stats.solution
-      ? decodeSolution(stats.solution)
-      : null;
+    const sameSession =
+      stats.date === sessionDate &&
+      stats.sessionToken === sessionToken;
 
-    const sameGame = _.isEqual(solution, decodedSolution);
+    if (sameSession) {
+      const answered = normalizeAnsweredGuesses(stats.guesses);
+      const hydrated = makeEmptyGuesses();
 
-    if (sameGame) {
-      const answeredGuesses = normalizeAnsweredGuesses(stats.guesses);
-      const hydratedGuesses = makeEmptyGuesses();
+      answered.forEach((g, i) => (hydrated[i] = g));
 
-      answeredGuesses.forEach((guess, index) => {
-        hydratedGuesses[index] = guess;
-      });
-
-      const normalizedCurrentTry = Math.min(
-        answeredGuesses.length,
-        Math.max(0, stats.currentTry ?? 0)
+      const normalizedTry = Math.min(
+        answered.length,
+        Math.max(0, stats.currentTry)
       );
 
-      setCurrentTry(normalizedCurrentTry);
-      setGuesses(hydratedGuesses);
+      setCurrentTry(normalizedTry);
+      setGuesses(hydrated);
       setDidGuess(!!stats.didGuess);
+
       setStats({
         ...stats,
-        currentTry: normalizedCurrentTry,
-        guesses: answeredGuesses,
+        version: STATE_VERSION,
+        currentTry: normalizedTry,
+        guesses: answered,
       });
     } else {
-      setStats(initialStats);
+      setStats(baseStats);
       setCurrentTry(0);
       setGuesses(makeEmptyGuesses());
       setDidGuess(false);
     }
 
     hydratedRef.current = true;
-  }, [solution, persist]);
+  }, [persist, sessionDate, sessionToken, initialSig, stats]);
 
   React.useEffect(() => {
     if (!persist) return;
     if (!hydratedRef.current) return;
 
-    if (skipNextStatsSyncRef.current) {
-      skipNextStatsSyncRef.current = false;
-      return;
-    }
-
-    setStats((prev) => {
-      if (!prev) return prev;
-
-      return {
-        ...prev,
-        currentTry,
-        didGuess,
-        guesses: guesses.filter(isAnsweredGuess),
-      };
-    });
-  }, [guesses, currentTry, didGuess, persist]);
-
-  React.useEffect(() => {
-    if (!persist) return;
-    if (!hydratedRef.current) return;
     if (!stats) {
       localStorage.removeItem("stats");
       return;
@@ -205,8 +194,64 @@ export function useGameState({ solution, persist }: UseGameStateOptions) {
     localStorage.setItem("stats", JSON.stringify(stats));
   }, [stats, persist]);
 
-  const skip = React.useCallback(() => {
+  const applyServerState = React.useCallback(
+    (next: DailyGameState, sig: string) => {
+      if (!sessionToken) return;
+
+      const answered = normalizeAnsweredGuesses(next.guesses);
+      const hydrated = makeEmptyGuesses();
+
+      answered.forEach((g, i) => (hydrated[i] = g));
+
+      const normalizedTry = Math.min(
+        answered.length,
+        Math.max(0, next.currentTry)
+      );
+
+      setCurrentTry(normalizedTry);
+      setGuesses(hydrated);
+      setDidGuess(!!next.didGuess);
+      setSelectedSong(undefined);
+
+      setStats({
+        version: STATE_VERSION,
+        date: next.date,
+        currentTry: normalizedTry,
+        didGuess: !!next.didGuess,
+        guesses: answered,
+        sig,
+        sessionToken,
+      });
+    },
+    [sessionToken]
+  );
+
+  const skip = React.useCallback(async () => {
     if (didGuess || currentTry >= guesses.length) return;
+
+    if (persist && sessionDate && sessionToken) {
+      if (!stats?.sig || isSubmitting) return;
+
+      setIsSubmitting(true);
+      try {
+        const res = await submitDailyGuess({
+          sessionToken,
+          sig: stats.sig,
+          state: {
+            date: sessionDate,
+            currentTry,
+            didGuess,
+            guesses: guesses.filter(isAnsweredGuess),
+          },
+          guess: null,
+        });
+
+        applyServerState(res.state, res.sig);
+      } finally {
+        setIsSubmitting(false);
+      }
+      return;
+    }
 
     setGuesses((prev) => {
       const copy = [...prev];
@@ -218,11 +263,48 @@ export function useGameState({ solution, persist }: UseGameStateOptions) {
     });
 
     setCurrentTry((t) => t + 1);
-  }, [currentTry, didGuess, guesses.length]);
+  }, [
+    didGuess,
+    currentTry,
+    guesses,
+    persist,
+    sessionDate,
+    sessionToken,
+    stats,
+    isSubmitting,
+    applyServerState,
+  ]);
 
-  const guess = React.useCallback(() => {
+  const guess = React.useCallback(async () => {
     if (!selectedSong || !solution) return;
     if (didGuess || currentTry >= guesses.length) return;
+
+    if (persist && sessionDate && sessionToken) {
+      if (!stats?.sig || isSubmitting) return;
+
+      setIsSubmitting(true);
+      try {
+        const res = await submitDailyGuess({
+          sessionToken,
+          sig: stats.sig,
+          state: {
+            date: sessionDate,
+            currentTry,
+            didGuess,
+            guesses: guesses.filter(isAnsweredGuess),
+          },
+          guess: {
+            artist: selectedSong.artist,
+            name: selectedSong.name,
+          },
+        });
+
+        applyServerState(res.state, res.sig);
+      } finally {
+        setIsSubmitting(false);
+      }
+      return;
+    }
 
     let state = GuessState.Incorrect;
 
@@ -237,20 +319,27 @@ export function useGameState({ solution, persist }: UseGameStateOptions) {
 
     setGuesses((prev) => {
       const copy = [...prev];
-      copy[currentTry] = {
-        song: selectedSong,
-        state,
-      };
+      copy[currentTry] = { song: selectedSong, state };
       return copy;
     });
 
     setCurrentTry((t) => t + 1);
     setSelectedSong(undefined);
 
-    if (state === GuessState.Correct) {
-      setDidGuess(true);
-    }
-  }, [selectedSong, solution, currentTry, didGuess, guesses.length]);
+    if (state === GuessState.Correct) setDidGuess(true);
+  }, [
+    selectedSong,
+    solution,
+    currentTry,
+    didGuess,
+    guesses,
+    persist,
+    sessionDate,
+    sessionToken,
+    stats,
+    isSubmitting,
+    applyServerState,
+  ]);
 
   const reset = React.useCallback(() => {
     setGuesses(makeEmptyGuesses());

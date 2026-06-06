@@ -15,15 +15,21 @@ ACCESS_KEY = os.getenv("R2_ACCESS_KEY")
 SECRET_KEY = os.getenv("R2_SECRET_KEY")
 BUCKET = os.getenv("R2_BUCKET")
 API_URL = os.getenv("API_URL")
-OBFUSCATION_KEY = os.getenv("OBFUSCATION_KEY")
+HEARDLE_SALT = (
+    os.getenv("VITE_HEARDLE_SALT")
+    or os.getenv("OBFUSCATION_KEY")
+)
 
 
 def xor_buffer(data: bytes, key: bytes) -> bytes:
     return bytes(b ^ key[i % len(key)] for i, b in enumerate(data))
 
-def get_obfuscation_key() -> bytes:
-    date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-    return (OBFUSCATION_KEY + date).encode("utf-8")
+def get_obfuscation_key(date: str) -> bytes:
+    if not HEARDLE_SALT:
+        raise ValueError(
+            "Missing HEARDLE salt. Set VITE_HEARDLE_SALT (preferred) or OBFUSCATION_KEY."
+        )
+    return (HEARDLE_SALT + date).encode("utf-8")
 
 def delete_file(file_path):
     if os.path.exists(file_path):
@@ -31,18 +37,25 @@ def delete_file(file_path):
         return True
     return False
 
-def decode_data(hex_data: str):
+def decode_data(hex_data: str, date: str):
     encrypted = bytes.fromhex(hex_data)
-    key = get_obfuscation_key()
+    key = get_obfuscation_key(date)
     decrypted = xor_buffer(encrypted, key)
     return json.loads(decrypted.decode("utf-8"))
 
 
 def fetch_daily() -> dict:
+    if not API_URL:
+        raise ValueError("Missing API_URL in environment.")
+
     url = f"{API_URL}/today"
-    response = requests.get(url)
+    response = requests.get(url, timeout=15)
     response.raise_for_status()
-    return response.json()
+    payload = response.json()
+    if "date" not in payload or "data" not in payload:
+        raise ValueError(f"Unexpected /today response shape: {payload}")
+
+    return payload
 
 
 def download_random_segment_mp3(youtube_id: str, output_file="today.mp3") -> str:
@@ -116,11 +129,11 @@ def main():
         else:
             new_data = True
         daily_data = fetch_daily()
-    data = decode_data(daily_data["data"])
+    data = decode_data(daily_data["data"], daily_data["date"])
     print(data)
     youtube_id = data["youtubeId"]
     clip_path = download_random_segment_mp3(youtube_id)
-    date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    date = daily_data["date"]
     upload_to_r2(clip_path, f"kheardle/{date}.mp3")
     delete_file("today.mp3")
     write_json("save.json", daily_data)

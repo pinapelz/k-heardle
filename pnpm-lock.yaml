@@ -43,6 +43,9 @@ dependencies:
   express:
     specifier: ^5.2.1
     version: 5.2.1
+  express-rate-limit:
+    specifier: ^8.5.2
+    version: 8.5.2(express@5.2.1)
   lodash:
     specifier: ^4.18.1
     version: 4.18.1
@@ -1816,6 +1819,16 @@ packages:
       jest-util: 30.4.1
     dev: false
 
+  /express-rate-limit@8.5.2(express@5.2.1):
+    resolution: {integrity: sha512-5Kb34ipNX694DH48vN9irak1Qx30nb0PLYHXfJgw4YEjiC3ZEmZJhwOp+VfiCYwFzvFTdB9QkArYS5kXa2cx2A==}
+    engines: {node: '>= 16'}
+    peerDependencies:
+      express: '>= 4.11'
+    dependencies:
+      express: 5.2.1
+      ip-address: 10.2.0
+    dev: false
+
   /express@5.2.1:
     resolution: {integrity: sha512-hIS4idWWai69NezIdRt2xFVofaF4j+6INOpJlVOLDO8zXGpUVEVzIYk12UUi2JzjEzWL3IOAxcTubgz9Po0yXw==}
     engines: {node: '>= 18'}
@@ -2069,6 +2082,11 @@ packages:
 
   /inherits@2.0.4:
     resolution: {integrity: sha512-k/vGaX4/Yla3WzyMCvTQOXYeIHvqOKtnqBduzTHpzpQZzAskKMhZ2K+EnBiSM9zGSoIFeMpXKxa4dYeZIQqewQ==}
+    dev: false
+
+  /ip-address@10.2.0:
+    resolution: {integrity: sha512-/+S6j4E9AHvW9SWMSEY9Xfy66O5PWvVEJ08O0y5JGyEKQpojb0K0GKpz/v5HJ/G0vi3D2sjGK78119oXZeE0qA==}
+    engines: {node: '>= 12'}
     dev: false
 
   /ipaddr.js@1.9.1:
