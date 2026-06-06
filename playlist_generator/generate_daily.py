@@ -66,25 +66,25 @@ def download_random_segment_mp3(youtube_id: str, output_file="today.mp3") -> str
     start = 0 if duration <= 17 else random.randint(0, duration - 17)
     ydl_opts = {
         "format": "bestaudio/best",
-        "outtmpl": "today.%(ext)s",
+        "outtmpl": output_file.replace(".mp3", ".%(ext)s"),
         "quiet": True,
+        "postprocessors": [{
+            "key": "FFmpegExtractAudio",
+            "preferredcodec": "mp3",
+            "preferredquality": "192",
+        }],
+
         "download_ranges": lambda info, _: [
             {"start_time": start, "end_time": start + 17}
         ],
         "force_keyframes_at_cuts": True,
-        "postprocessors": [
-            {
-                "key": "FFmpegExtractAudio",
-                "preferredcodec": "mp3",
-                "preferredquality": "192",
-            }
-        ],
+        "overwrites": True,
+        "nopart": True,
     }
-
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         ydl.download([url])
-    return output_file
 
+    return output_file
 
 def upload_to_r2(file_path: str, object_key: str):
     s3 = boto3.client(
@@ -135,7 +135,7 @@ def main():
     clip_path = download_random_segment_mp3(youtube_id)
     date = daily_data["date"]
     upload_to_r2(clip_path, f"kheardle/{date}.mp3")
-    delete_file("today.mp3")
+    delete_file(clip_path)
     write_json("save.json", daily_data)
 
 if __name__ == "__main__":
