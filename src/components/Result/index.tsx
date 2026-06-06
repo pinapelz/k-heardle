@@ -9,6 +9,7 @@ import { MiniYouTubePlayer } from "../MiniYouTubePlayer";
 
 import * as Styled from "./index.styled";
 import { theme } from "../../constants";
+import GuessDistributionChart from '../Chart';
 
 interface SolutionProps {
   didGuess: boolean;
@@ -89,6 +90,7 @@ interface Props {
   todaysSolution: Song;
   guesses: GuessType[];
   mode?: "daily" | "unlimited";
+  sessionDate: string;
   onPlayAgain?: () => void;
 }
 
@@ -98,6 +100,7 @@ export function Result({
   guesses,
   currentTry,
   mode = "daily",
+  sessionDate,
   onPlayAgain,
 }: Props) {
   const now = new Date();
@@ -126,6 +129,13 @@ export function Result({
           currentTry={currentTry}
           isUnlimited={isUnlimited}
         />
+        {!isUnlimited && (
+          <GuessDistributionChart
+            currentTry={currentTry}
+            didGuess={didGuess}
+            sessionDate={sessionDate}
+          />
+        )}
 
         {!isUnlimited && <ShareButton guesses={guesses} variant="green" />}
 
@@ -152,6 +162,13 @@ export function Result({
         currentTry={currentTry}
         isUnlimited={isUnlimited}
       />
+      {!isUnlimited && (
+        <GuessDistributionChart
+          currentTry={currentTry}
+          didGuess={didGuess}
+          sessionDate={sessionDate}
+        />
+      )}
 
       {!isUnlimited && <ShareButton guesses={guesses} variant="red" />}
 

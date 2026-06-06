@@ -47,13 +47,36 @@ export function Game({
     !!dailyDate &&
     !hasFinishedResponseDaily &&
     new Date(getUtcDate()) > new Date(dailyDate);
+  const sessionDate = dailyDate ?? getUtcDate();
 
   React.useEffect(() => {
     if (mode !== "daily") return;
     if (!hasFinishedCurrentRound) return;
+    localStorage.setItem("recentFinishedPlay", sessionDate);
 
-    localStorage.setItem("recentFinishedPlay", dailyDate ?? getUtcDate());
-  }, [mode, hasFinishedCurrentRound, dailyDate]);
+    const historicalPlayData = localStorage.getItem("historicalPlayData");
+    if (historicalPlayData === null) {
+      localStorage.setItem(
+        "historicalPlayData",
+        JSON.stringify({
+          sessionDates: [sessionDate],
+          guesses: [currentTry],
+          didGuess: [didGuess],
+        })
+      );
+    } else {
+      const parsedData = JSON.parse(historicalPlayData);
+      if (parsedData.sessionDates.includes(sessionDate)) return;
+      localStorage.setItem(
+        "historicalPlayData",
+        JSON.stringify({
+          sessionDates: [...parsedData.sessionDates, sessionDate],
+          guesses: [...parsedData.guesses, currentTry],
+          didGuess: [...parsedData.didGuess, didGuess],
+        })
+      );
+    }
+  }, [mode, hasFinishedCurrentRound, sessionDate, currentTry, didGuess]);
 
   if (isBlocked) {
     return <h1>Daily MIXX is not available yet. Check back soon!</h1>;
@@ -67,6 +90,7 @@ export function Game({
         todaysSolution={todaysSolution}
         guesses={guesses}
         mode={mode}
+        sessionDate={sessionDate}
         onPlayAgain={onPlayAgain}
       />
     );
