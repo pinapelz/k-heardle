@@ -5,6 +5,7 @@ export async function scoreToEmoji(guesses: GuessType[]): Promise<string> {
   const msInDay = 24 * 60 * 60 * 1000;
   const today = new Date();
   const startDate = new Date(import.meta.env.VITE_START_DATE);
+  const currentPageUrl = window.location.href;
   const index =
     Math.floor(
       (Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()) -
@@ -36,5 +37,5 @@ export async function scoreToEmoji(guesses: GuessType[]): Promise<string> {
     }
   });
 
-  return `${prefix}\n${scoreEmoji}`;
+  return `${prefix}\n${scoreEmoji}\n${currentPageUrl}`;
 }
