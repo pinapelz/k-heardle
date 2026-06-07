@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { Song } from "../../types/song";
 import { GuessType } from "../../types/guess";
 import { scoreToEmoji } from "../../helpers";
+import { appName } from '../../constants';
 
 import { Button } from "../Button";
 import { MiniYouTubePlayer } from "../MiniYouTubePlayer";
@@ -62,6 +63,7 @@ function ShareButton({ guesses, variant }: ShareButtonProps) {
     };
   }, [guesses]);
 
+
   const handleClick = React.useCallback(async () => {
     const windowsPlatforms = ['Win32', 'Win64', 'Windows', 'WinCE'];
     const onWindows =
@@ -103,6 +105,7 @@ export function Result({
   sessionDate,
   onPlayAgain,
 }: Props) {
+  const [timeLeftStr, setTimeLeftStr] = useState<string>('');
   const now = new Date();
   const nextUtcMidnight = Date.UTC(
     now.getUTCFullYear(),
@@ -111,9 +114,29 @@ export function Result({
     0, 0, 0
   );
 
-  const hoursToNextDay = Math.floor(
-    (nextUtcMidnight - now.getTime()) / 1000 / 60 / 60
-  );
+  React.useEffect(() => {
+    const updateTimeLeft = () => {
+      const now = Date.now();
+      const nextUtcMidnight = Date.UTC(
+        new Date().getUTCFullYear(),
+        new Date().getUTCMonth(),
+        new Date().getUTCDate() + 1
+      );
+      const remaining = nextUtcMidnight - now;
+      const hours = Math.floor(remaining / 3600000);
+      const minutes = Math.floor((remaining % 3600000) / 60000);
+      const seconds = Math.floor((remaining % 60000) / 1000);
+      setTimeLeftStr(`${hours}h ${minutes}m ${seconds}s`);
+    };
+
+    updateTimeLeft();
+    const intervalId = setInterval(updateTimeLeft, 1000);
+
+    return () => {
+      clearInterval(intervalId);
+    };
+  }, []);
+
   const isUnlimited = mode === "unlimited";
 
   if (didGuess) {
@@ -145,7 +168,7 @@ export function Result({
           </Button>
         ) : (
           <Styled.TimeToNext>
-            Remember to come back in {hoursToNextDay} hours!
+            The next {appName} will be available in {timeLeftStr}!
           </Styled.TimeToNext>
         )}
       </>
@@ -178,7 +201,7 @@ export function Result({
         </Button>
       ) : (
         <Styled.TimeToNext>
-          Try again in {hoursToNextDay} hours.
+          Try again in {timeLeftStr}.
         </Styled.TimeToNext>
       )}
     </>
