@@ -1,4 +1,3 @@
-import React from "react";
 import { default as YouTubePlayer } from "react-youtube";
 
 interface Props {

@@ -12,10 +12,10 @@ The state of the daily game is kept locally and a signature is generated to prev
 # Unlimited Mode
 - Unlimited play
 - Uses a minimized YouTube miniplayer for audio
-- Song segments always start at the beginning of the video
+- A random segment of audio from YouTube video
 - Guesses are verified locally
 
-> Its recommended to play in fullscrene to prevent any media modules from leaking the solutions
+> Its recommended to play in fullscreen to prevent any media modules from leaking the solutions. Extra audio sometimes plays due to the nature of YouTube's IFrame API.
 
 
 # Local Development
