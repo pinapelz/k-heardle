@@ -19,7 +19,17 @@ HEARDLE_SALT = (
     os.getenv("VITE_HEARDLE_SALT")
     or os.getenv("OBFUSCATION_KEY")
 )
+NTFY_URL = os.getenv("NTFY_URL")
+NTFY_TOKEN = os.getenv("NTFY_TOKEN")
 
+def send_notification(message: str):
+    if not NTFY_URL or not NTFY_TOKEN:
+        return
+    requests.post(
+        NTFY_URL,
+        data=message.encode(encoding='utf-8'),
+        headers={"Authorization": f"Bearer {NTFY_TOKEN}"},
+    )
 
 def xor_buffer(data: bytes, key: bytes) -> bytes:
     return bytes(b ^ key[i % len(key)] for i, b in enumerate(data))
@@ -130,13 +140,23 @@ def main():
             new_data = True
         daily_data = fetch_daily()
     data = decode_data(daily_data["data"], daily_data["date"])
-    print(data)
     youtube_id = data["youtubeId"]
-    clip_path = download_random_segment_mp3(youtube_id)
+    try:
+        clip_path = download_random_segment_mp3(youtube_id)
+    except:
+        print(f"Failed to download clip for {youtube_id}")
+        send_notification(f"K-HEARDLE: Failed to download clip for {youtube_id}")
+        return
     date = daily_data["date"]
-    upload_to_r2(clip_path, f"kheardle/{date}.mp3")
-    delete_file(clip_path)
+    try:
+        upload_to_r2(clip_path, f"kheardle/{date}.mp3")
+        delete_file(clip_path)
+    except:
+        print(f"Failed to upload clip for {date}")
+        send_notification(f"K-HEARDLE: Failed to upload clip for {date}")
+        return
     write_json("save.json", daily_data)
+    send_notification(f"K-HEARDLE: Successfully generated daily playlist for {date}")
 
 if __name__ == "__main__":
     main()
