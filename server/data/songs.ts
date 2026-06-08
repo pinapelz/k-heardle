@@ -440,4 +440,10 @@ export const songs = [
   { artist: "ALLDAY PROJECT", name: "‘ONE MORE TIME’", youtubeId: "XUNvU0Fy3ZI" },
   { artist: "ITZY", name: "LOCO", youtubeId: "AzifmextSDM" },
   { artist: "RESCENE", name: "Runaway", youtubeId: "op05giODUE0" },
+  { artist: "tripleS", name: "Sad Girls Schemin'", youtubeId: "gFyymeY7-7A" },
+  { artist: "BABYMONSTER", name: "SUGAR HONEY ICE TEA", youtubeId: "J3-oRJ606Jw" },
+  { artist: "Choerry (ARTMS)", name: "Pressure", youtubeId: "03pOwBH_ML8" },
+  { artist: "Heize", name: "And July", youtubeId: "rCeM57e2BfU" },
+  { artist: "DAY6", name: "HAPPY", youtubeId: "2o1zdX72400" },
+  { artist: "YUNA (ITZY)", name: "Ice Cream", youtubeId: "x0FwbTiD3iA" },
 ]
