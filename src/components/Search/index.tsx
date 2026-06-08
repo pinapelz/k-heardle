@@ -11,30 +11,18 @@ interface Props {
 }
 
 export function Search({ currentTry, setSelectedSong }: Props) {
-  const [value, setValue] = React.useState<string>("");
+  const [value, setValue] = React.useState("");
   const [results, setResults] = React.useState<Song[]>([]);
 
   React.useEffect(() => {
-    let cancelled = false;
-
-    async function runSearch() {
-      if (!value) {
-        setResults([]);
-        return;
-      }
-      const songs = await searchSong(value);
-
-      if (!cancelled) {
-        setResults(songs);
-      }
+    if (!value.trim()) {
+      setResults([]);
+      return;
     }
-    runSearch();
-    return () => {
-      cancelled = true;
-    };
+
+    setResults(searchSong(value));
   }, [value]);
 
-  // clear value on selection
   React.useEffect(() => {
     setValue("");
   }, [currentTry]);
@@ -57,13 +45,14 @@ export function Search({ currentTry, setSelectedSong }: Props) {
           </Styled.Result>
         ))}
       </Styled.ResultsContainer>
+
       <Styled.SearchContainer>
         <Styled.SearchPadding>
           <IoSearch size={20} />
           <Styled.Input
+            value={value}
             onChange={(e) => setValue(e.currentTarget.value)}
             placeholder="Search"
-            value={value}
           />
         </Styled.SearchPadding>
       </Styled.SearchContainer>
