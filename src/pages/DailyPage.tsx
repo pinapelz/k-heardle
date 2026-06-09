@@ -69,6 +69,7 @@ export function DailyPage() {
     didGuess,
     skip,
     guess,
+    isSubmitting,
   } = useGameState({
     solution: todaysSolution?.song ?? null,
     persist: true,
@@ -109,6 +110,7 @@ export function DailyPage() {
           setSelectedSong={setSelectedSong}
           skip={skip}
           guess={guess}
+          isSubmitting={isSubmitting}
         />
       </Styled.Container>
       <Footer />

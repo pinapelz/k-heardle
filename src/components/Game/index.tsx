@@ -19,6 +19,7 @@ interface Props {
   guess: () => void;
   mode?: "daily" | "unlimited";
   onPlayAgain?: () => void;
+  isSubmitting?: boolean;
 }
 
 function getUtcDate() {
@@ -36,6 +37,7 @@ export function Game({
   guess,
   mode = "daily",
   onPlayAgain,
+  isSubmitting = false,
 }: Props) {
   const recentFinishedPlay = localStorage.getItem("recentFinishedPlay");
   const hasFinishedCurrentRound = didGuess || currentTry >= guesses.length;
@@ -110,12 +112,14 @@ export function Game({
       <Search currentTry={currentTry} setSelectedSong={setSelectedSong} />
       <Styled.Buttons>
         <Button onClick={skip}>
-          {currentTry === 5
+          {isSubmitting
+            ? "Skipping..."
+            : currentTry === 5
             ? "Give Up"
             : `Skip +${playTimes[currentTry] / 1000}s`}
         </Button>
         <Button variant="green" onClick={guess}>
-          Submit
+          {isSubmitting ? "Submitting..." : "Submit"}
         </Button>
       </Styled.Buttons>
     </>

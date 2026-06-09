@@ -339,5 +339,6 @@ export function useGameState({
     skip,
     guess,
     reset,
+    isSubmitting
   };
 }
