@@ -25,3 +25,5 @@ pnpm dev
 ```
 
 This repo is a fork of [EpicWolverine/PersonalHeardle](https://github.com/EpicWolverine/PersonalHeardle), however much of the code has been modified to a client-server relationship and the CRA has been deprecated in favor of Vite.
+
+The CSS theme of the site is based on dacctal's [caelus](https://git.symlinx.net/daccfiles/)
