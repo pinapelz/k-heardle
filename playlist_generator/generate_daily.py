@@ -4,7 +4,7 @@ import json
 import requests
 import random
 from dotenv import load_dotenv
-from datetime import datetime, timezone
+from datetime import datetime, timedelta
 import yt_dlp
 import time
 
@@ -106,6 +106,16 @@ def upload_to_r2(file_path: str, object_key: str):
     )
     s3.upload_file(file_path, BUCKET, object_key)
 
+def delete_from_r2(object_key: str):
+    s3 = boto3.client(
+        "s3",
+        endpoint_url=f"https://{ACCOUNT_ID}.r2.cloudflarestorage.com",
+        aws_access_key_id=ACCESS_KEY,
+        aws_secret_access_key=SECRET_KEY,
+        region_name="auto",
+    )
+    s3.delete_object(Bucket=BUCKET, Key=object_key)
+
 
 def write_json(file_path, data):
     with open(file_path, "w", encoding="utf-8") as f:
@@ -157,6 +167,9 @@ def main():
         return
     write_json("save.json", daily_data)
     send_notification(f"K-HEARDLE: Successfully generated daily playlist for {date}")
+    three_days_ago = (datetime.now() - timedelta(days=3)).strftime("%Y-%m-%d")
+    delete_from_r2(f"kheardle/{three_days_ago}.mp3")
+    send_notification(f"K-HEARDLE: Deleted old clip for {three_days_ago}")
 
 if __name__ == "__main__":
     main()
