@@ -23,6 +23,13 @@ export function InfoPopUp({ onClose }: Props) {
         <Styled.Section>
           <p>Answer in as few tries as possible and share your score!</p>
         </Styled.Section>
+        <Styled.Spacer />
+        <Styled.Section>
+          <p>⬜ Skipped</p>
+          <p>🟥 Incorrect Song, Incorrect Artist</p>
+          <p>🟨 Correct Artist, Incorrect Song</p>
+          <p>🟩 You guessed it!</p>
+        </Styled.Section>
         <Button variant="green" style={{ marginTop: 20 }} onClick={onClose}>
           Play
         </Button>
