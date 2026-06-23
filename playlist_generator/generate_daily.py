@@ -166,7 +166,7 @@ def main():
         send_notification(f"K-HEARDLE: Failed to upload clip for {date}")
         return
     write_json("save.json", daily_data)
-    send_notification(f"K-HEARDLE: Successfully generated daily playlist for {date}")
+    send_notification(f"K-HEARDLE: Successfully generated daily track for {date} UTC")
     three_days_ago = (datetime.now() - timedelta(days=3)).strftime("%Y-%m-%d")
     delete_from_r2(f"kheardle/{three_days_ago}.mp3")
     send_notification(f"K-HEARDLE: Deleted old clip for {three_days_ago}")

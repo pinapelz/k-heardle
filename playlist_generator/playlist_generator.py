@@ -1,10 +1,15 @@
 #!/usr/bin/python3
 import argparse
-from random import shuffle
 import yt_dlp
-
+import json5
+import re
 
 class PlaylistGenerator:
+
+    def __init__(self, song_db: list[dict]):
+        self.song_db = song_db
+        self.known_ids = set()
+
     def get_urls_from_file(self, path: str) -> list[str]:
         with open(path) as f:
             lines = f.readlines()
@@ -30,11 +35,21 @@ class PlaylistGenerator:
         return list(info.values())
 
     def build_playlist_string(self, video_info: list[dict[str]]) -> str:
-        output = ""
+        output = "export const songs = [\n"
         for info in video_info:
+            video_id = info["id"]
+            if video_id in self.known_ids:
+                continue
+            self.known_ids.add(video_id)
             artist = self.escape_quotes(self.get_artist(info))
             title = self.escape_quotes(self.get_title(info))
             output += f'{{ artist: "{artist}", name: "{title}", youtubeId: "{info["id"]}" }},\n'
+        for song in self.song_db:
+            if song["youtubeId"] in self.known_ids:
+                continue
+            output += f'{{ artist: "{song["artist"]}", name: "{song["name"]}", youtubeId: "{song["youtubeId"]}" }},\n'
+            self.known_ids.add(song["youtubeId"])
+        output += "]"
         return output
 
     def get_artist(self, info):
@@ -64,13 +79,15 @@ class PlaylistGenerator:
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("urls_file")
-    parser.add_argument("output_file")
+    parser.add_argument("output_file", default="../server/data/songs.ts")
     args = parser.parse_args()
-
-    generator = PlaylistGenerator()
+    with open(args.output_file, "r", encoding="utf-8") as f:
+        text = f.read()
+    array_text = re.search(r"\[.*\]", text, re.S).group(0)
+    songs = json5.loads(array_text)
+    generator = PlaylistGenerator(songs)
     urls = generator.get_urls_from_file(args.urls_file)
     video_info = generator.extract(urls)
-    shuffle(video_info)
     js_playlist = generator.build_playlist_string(video_info)
     with open(args.output_file, 'w') as f:
         f.write(js_playlist)
