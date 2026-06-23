@@ -27,3 +27,30 @@ pnpm dev
 This repo is a fork of [EpicWolverine/PersonalHeardle](https://github.com/EpicWolverine/PersonalHeardle), however much of the code has been modified to a client-server relationship and the CRA has been deprecated in favor of Vite.
 
 The CSS theme of the site is based on dacctal's [caelus](https://git.symlinx.net/daccfiles/)
+
+# Deployment
+The `playlist_generator` directory contains scripts relevant to generating `songs.ts` which contains all songs used in K-Heardle.
+
+First enter the directory and install the dependencies
+```bash
+uv sync
+uv init
+```
+
+## `playlist_generator.py`
+Generates/updates a songs.ts file given a file of YouTube links
+```bash
+uv run playlist_generator.py <INPUT_FILE> <OUTPUT_FILE> 
+```
+- INPUT_FILE is a text file of YouTube URLs to songs
+- OUTPUT_FILE the `songs.ts` file to output to, defaults to `../server/data/songs.ts`
+
+## `generate_daily.py`
+Generates a daily song snippet for daily game mode. Intended to be run once a day
+
+> Requires a environment variables to be configured see `playlist_generator/.env.template`
+
+ ```bash
+ uv run generate_daily.py
+ ```
+By default this script assumes Cloudflare R2, however any S3 bucket credentials will work fine
