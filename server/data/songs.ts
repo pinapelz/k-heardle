@@ -370,7 +370,6 @@ export const songs = [
 { artist: "IRENE", name: "Best Believe", youtubeId: "H_gOO1ToI3c" },
 { artist: "LEE CHAE YEON", name: "KNOCK", youtubeId: "mdNuTYlEeiU" },
 { artist: "BABYMONSTER", name: "Woke Up In Tokyo", youtubeId: "KcSwEoDRWTA" },
-{ artist: "i-dle", name: "I DO", youtubeId: "S4wL0roXNFk" },
 { artist: "ILLIT", name: "Mamihlapinatapai", youtubeId: "Lds_DyEYAk0" },
 { artist: "ITZY", name: "SNEAKERS", youtubeId: "-uOShlFu1v8" },
 { artist: "KISS OF LIFE", name: "Sticky", youtubeId: "WA97qDH6w9I" },
