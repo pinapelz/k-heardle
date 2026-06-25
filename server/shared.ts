@@ -58,6 +58,32 @@ export function getDailySong(date: string): Song {
   return songs[index];
 }
 
+function getLastNDates(n: number): string[] {
+  const dates: string[] = [];
+  for (let i = 1; i <= n; i++) {
+    const d = new Date();
+    d.setUTCDate(d.getUTCDate() - i);
+    dates.push(d.toISOString().slice(0, 10));
+  }
+  return dates;
+}
+
+export function getDailySongNoRepeat(): Song {
+  const today = getUtcDate();
+  const recentSongs = new Set(
+    getLastNDates(30).map(d => getDailySong(d).youtubeId)
+  );
+  let candidate = getDailySong(today);
+  let guard = 0;
+  while (recentSongs.has(candidate.youtubeId) && guard < songs.length) {
+    const rerollSeed = hashString(today + ":" + guard);
+    const index = rerollSeed % songs.length;
+    candidate = songs[index];
+    guard++;
+  }
+  return candidate;
+}
+
 function signValue(prefix: string, value: string): string {
   return createHmac("sha256", getSigningSecret())
     .update(`${prefix}:${value}`)
