@@ -427,7 +427,7 @@ export const songs = [
 { artist: "MIYEON", name: "Say My Name", youtubeId: "6uhEv8-fHqw" },
 { artist: "NiziU", name: "HEARTRIS", youtubeId: "pL7xJVTtaiI" },
 { artist: "IVE", name: "DARE ME", youtubeId: "VIgjbMKOkHA" },
-{ artist: "YENA", name: "ミラミラ", youtubeId: "j-EGSdDOdtI" },
+{ artist: "YENA", name: "Mira Mira", youtubeId: "j-EGSdDOdtI" },
 { artist: "IVE", name: "HOT COFFEE", youtubeId: "X-IenagFlbg" },
 { artist: "QWER", name: "D-Day", youtubeId: "YCaTtV9zu6A" },
 { artist: "FIFTY FIFTY", name: "Took It Too Far", youtubeId: "FoXdqgkI338" },
