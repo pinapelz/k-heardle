@@ -1,5 +1,7 @@
 import { createHmac, timingSafeEqual } from "crypto";
 import { songs } from "./data/songs";
+import { musicVideos } from "./data/mvs";
+
 
 function getSalt(): string {
   return process.env.VITE_HEARDLE_SALT ?? "changeme";
@@ -58,6 +60,7 @@ export function pickSong(date: string): Song {
   return songs[index];
 }
 
+
 function getLastNDates(n: number): string[] {
   const dates: string[] = [];
   for (let i = 1; i <= n; i++) {
@@ -81,6 +84,17 @@ export function getDailySong(today: string): Song {
     guard++;
   }
   return candidate;
+}
+
+export function pickMusicVideo(date: string): Song {
+  const seed = hashString(date);
+  const index = seed % musicVideos.length;
+  return musicVideos[index];
+}
+
+export function getDailyMusicVideo(today: string): Song {
+  // potentially use deterministic no-repeat here too, for now this is fine
+  return pickMusicVideo(today);
 }
 
 function signValue(prefix: string, value: string): string {
