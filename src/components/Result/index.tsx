@@ -91,7 +91,7 @@ interface Props {
   currentTry: number;
   todaysSolution: Song;
   guesses: GuessType[];
-  mode?: "daily" | "unlimited";
+  mode?: "daily" | "unlimited" | "dailyMV";
   sessionDate: string;
   onPlayAgain?: () => void;
 }
@@ -131,6 +131,7 @@ export function Result({
   }, []);
 
   const isUnlimited = mode === "unlimited";
+  const chartMode = mode === "dailyMV" ? "dailyMV" : "daily";
 
   if (didGuess) {
     const textForTry = ["Perfect!", "Wow!", "Super!", "Congrats!", "Nice!"];
@@ -150,6 +151,7 @@ export function Result({
             currentTry={currentTry}
             didGuess={didGuess}
             sessionDate={sessionDate}
+            mode={chartMode}
           />
         )}
 
@@ -183,6 +185,7 @@ export function Result({
           currentTry={currentTry}
           didGuess={didGuess}
           sessionDate={sessionDate}
+          mode={chartMode}
         />
       )}
 

@@ -21,6 +21,7 @@ interface Props {
   currentTry: number;
   didGuess: boolean;
   sessionDate: string;
+  mode?: "daily" | "dailyMV";
 }
 
 interface HistoricalPlayData {
@@ -32,9 +33,11 @@ interface HistoricalPlayData {
 type GuessCount = 1 | 2 | 3 | 4 | 5 | 6;
 type Distribution = Record<GuessCount, number> & { NS: number };
 
-function getHistoricalPlayData(): HistoricalPlayData {
+function getHistoricalPlayData(mode: "daily" | "dailyMV"): HistoricalPlayData {
+  const storageKey =
+    mode === "dailyMV" ? "historicalPlayDataMV" : "historicalPlayData";
   try {
-    return JSON.parse(localStorage.getItem("historicalPlayData") || "{}");
+    return JSON.parse(localStorage.getItem(storageKey) || "{}");
   } catch {
     return {};
   }
@@ -59,8 +62,9 @@ export default function GuessDistributionChart({
   currentTry,
   didGuess,
   sessionDate,
+  mode = "daily",
 }: Props) {
-  const historicalPlayData = getHistoricalPlayData();
+  const historicalPlayData = getHistoricalPlayData(mode);
 
   const distribution: Distribution = {
     1: 0,

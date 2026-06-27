@@ -107,7 +107,7 @@ export function Game({
         currentTry={currentTry}
         todaysSolution={todaysSolution}
         guesses={guesses}
-        mode={mode === "dailyMV" ? "daily" : mode}
+        mode={mode}
         sessionDate={sessionDate}
         onPlayAgain={onPlayAgain}
       />
