@@ -106,13 +106,6 @@ export function Result({
   onPlayAgain,
 }: Props) {
   const [timeLeftStr, setTimeLeftStr] = useState<string>('');
-  const now = new Date();
-  const nextUtcMidnight = Date.UTC(
-    now.getUTCFullYear(),
-    now.getUTCMonth(),
-    now.getUTCDate() + 1,
-    0, 0, 0
-  );
 
   React.useEffect(() => {
     const updateTimeLeft = () => {

@@ -4,7 +4,7 @@ import { appName } from "../constants";
 export async function scoreToEmoji(guesses: GuessType[]): Promise<string> {
   const msInDay = 24 * 60 * 60 * 1000;
   const today = new Date();
-  const startDate = new Date(import.meta.env.VITE_START_DATE);
+  const startDate = new Date(import.meta.env.VITE_START_DATE || today.toISOString());
   const currentPageUrl = window.location.href;
   const index =
     Math.floor(
@@ -19,7 +19,10 @@ export async function scoreToEmoji(guesses: GuessType[]): Promise<string> {
     skip: "⬜",
     empty: "⬛️",
   };
-  const prefix = `${appName} - #${index}`;
+  let prefix = `${appName} (Daily Heardle) - #${index}`;
+  if (currentPageUrl.endsWith("mv")) {
+    prefix = `${appName} (Daily MV) - #${index}`;
+  }
 
   let scoreEmoji = "";
 
