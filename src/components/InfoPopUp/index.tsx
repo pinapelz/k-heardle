@@ -4,9 +4,14 @@ import * as Styled from "./index.styled";
 
 interface Props {
   onClose: () => void;
+  gameMode: string;
 }
 
-export function InfoPopUp({ onClose }: Props) {
+export function InfoPopUp({ onClose, gameMode }: Props) {
+  let firstLine = "Listen to the audio clip, then find the correct song in the list."
+  if (gameMode === "dailyMV") {
+    firstLine = "Find the correct song in the list based on photos from the music video.";
+  }
   return (
     <Styled.Container>
       <Styled.PopUp>
@@ -14,7 +19,7 @@ export function InfoPopUp({ onClose }: Props) {
         <Styled.Spacer />
         <Styled.Section>
           <p>
-            Listen to the audio clip, then find the correct song in the list.
+            {firstLine}
           </p>
         </Styled.Section>
         <Styled.Section>

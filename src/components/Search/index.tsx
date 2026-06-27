@@ -8,9 +8,11 @@ import * as Styled from "./index.styled";
 interface Props {
   currentTry: number;
   setSelectedSong: React.Dispatch<React.SetStateAction<Song | undefined>>;
+  /** Optional override of the song pool to search within. */
+  songs?: Song[];
 }
 
-export function Search({ currentTry, setSelectedSong }: Props) {
+export function Search({ currentTry, setSelectedSong, songs }: Props) {
   const [value, setValue] = React.useState("");
   const [results, setResults] = React.useState<Song[]>([]);
 
@@ -20,8 +22,8 @@ export function Search({ currentTry, setSelectedSong }: Props) {
       return;
     }
 
-    setResults(searchSong(value));
-  }, [value]);
+    setResults(searchSong(value, songs));
+  }, [value, songs]);
 
   React.useEffect(() => {
     setValue("");

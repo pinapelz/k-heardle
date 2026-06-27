@@ -1,7 +1,13 @@
 import React from "react";
 import { Song } from "../types/song";
 import { GuessState, GuessType } from "../types/guess";
-import { DailyGameState, submitDailyGuess } from "../helpers/fetchSolution";
+import {
+  DailyGameState,
+  submitDailyGuess,
+  submitDailyMVGuess,
+} from "../helpers/fetchSolution";
+
+export type GameMode = "daily" | "dailyMV";
 
 interface UseGameStateOptions {
   solution: Song | null;
@@ -9,6 +15,7 @@ interface UseGameStateOptions {
   sessionDate?: string;
   sessionToken?: string;
   initialSig?: string;
+  mode?: GameMode;
 }
 
 const STATE_VERSION = 2;
@@ -20,6 +27,11 @@ interface PersistedStatsV2 extends DailyGameState {
 }
 
 type PersistedStats = PersistedStatsV2;
+
+const STORAGE_KEY_BY_MODE: Record<GameMode, string> = {
+  daily: "stats",
+  dailyMV: "statsMV",
+};
 
 const initialGuess: GuessType = {
   song: undefined,
@@ -38,9 +50,9 @@ const normalizeAnsweredGuesses = (guesses: unknown): GuessType[] => {
   return (guesses as GuessType[]).filter(isAnsweredGuess).slice(0, 6);
 };
 
-function loadStats(): PersistedStats | null {
+function loadStats(mode: GameMode): PersistedStats | null {
   try {
-    const raw = localStorage.getItem("stats");
+    const raw = localStorage.getItem(STORAGE_KEY_BY_MODE[mode]);
     if (!raw) return null;
 
     const parsed = JSON.parse(raw);
@@ -59,7 +71,7 @@ function loadStats(): PersistedStats | null {
       typeof parsed.version === "number" && parsed.version < STATE_VERSION;
 
     if (isLegacyV0 || isLegacyVersion) {
-      localStorage.clear();
+      localStorage.removeItem(STORAGE_KEY_BY_MODE[mode]);
       return null;
     }
 
@@ -81,7 +93,7 @@ function loadStats(): PersistedStats | null {
         typeof parsed.sessionToken === "string" ? parsed.sessionToken : "",
     };
   } catch {
-    localStorage.removeItem("stats");
+    localStorage.removeItem(STORAGE_KEY_BY_MODE[mode]);
     return null;
   }
 }
@@ -92,6 +104,7 @@ export function useGameState({
   sessionDate,
   sessionToken,
   initialSig,
+  mode = "daily",
 }: UseGameStateOptions) {
   const [guesses, setGuesses] = React.useState<GuessType[]>(makeEmptyGuesses());
   const [currentTry, setCurrentTry] = React.useState(0);
@@ -100,8 +113,10 @@ export function useGameState({
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
   const [stats, setStats] = React.useState<PersistedStats | null>(() =>
-    loadStats()
+    loadStats(mode)
   );
+
+  const submitGuessFn = mode === "dailyMV" ? submitDailyMVGuess : submitDailyGuess;
 
   const hydratedRef = React.useRef(false);
 
@@ -169,12 +184,12 @@ export function useGameState({
     if (!hydratedRef.current) return;
 
     if (!stats) {
-      localStorage.removeItem("stats");
+      localStorage.removeItem(STORAGE_KEY_BY_MODE[mode]);
       return;
     }
 
-    localStorage.setItem("stats", JSON.stringify(stats));
-  }, [stats, persist]);
+    localStorage.setItem(STORAGE_KEY_BY_MODE[mode], JSON.stringify(stats));
+  }, [stats, persist, mode]);
 
   const applyServerState = React.useCallback(
     (next: DailyGameState, sig: string) => {
@@ -216,7 +231,7 @@ export function useGameState({
 
       setIsSubmitting(true);
       try {
-        const res = await submitDailyGuess({
+        const res = await submitGuessFn({
           sessionToken,
           sig: stats.sig,
           state: {
@@ -255,6 +270,7 @@ export function useGameState({
     stats,
     isSubmitting,
     applyServerState,
+    submitGuessFn,
   ]);
 
   const guess = React.useCallback(async () => {
@@ -266,7 +282,7 @@ export function useGameState({
 
       setIsSubmitting(true);
       try {
-        const res = await submitDailyGuess({
+        const res = await submitGuessFn({
           sessionToken,
           sig: stats.sig,
           state: {
@@ -321,6 +337,7 @@ export function useGameState({
     stats,
     isSubmitting,
     applyServerState,
+    submitGuessFn,
   ]);
 
   const reset = React.useCallback(() => {

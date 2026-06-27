@@ -77,6 +77,20 @@ export async function getDailySolution(): Promise<DailySolution> {
   };
 }
 
+export async function getDailyMVSolution(): Promise<DailySolution> {
+  const solutionData = await fetch(`${API_URL}/todayMV`);
+  if (!solutionData.ok) {
+    throw new Error(`Failed to fetch MV solution: ${solutionData.statusText}`);
+  }
+  const { data, date, sessionToken, initialSig } = await solutionData.json();
+  return {
+    date,
+    sessionToken,
+    initialSig,
+    song: decryptResponse(data, date),
+  };
+}
+
 export async function submitDailyGuess(
   payload: SubmitDailyGuessRequest
 ): Promise<SubmitDailyGuessResponse> {
@@ -90,6 +104,24 @@ export async function submitDailyGuess(
 
   if (!response.ok) {
     throw new Error(`Failed to submit guess: ${response.statusText}`);
+  }
+
+  return (await response.json()) as SubmitDailyGuessResponse;
+}
+
+export async function submitDailyMVGuess(
+  payload: SubmitDailyGuessRequest
+): Promise<SubmitDailyGuessResponse> {
+  const response = await fetch(`${API_URL}/guessMV`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to submit MV guess: ${response.statusText}`);
   }
 
   return (await response.json()) as SubmitDailyGuessResponse;

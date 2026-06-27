@@ -3,8 +3,9 @@ import React from "react";
 import { GuessType } from "../../types/guess";
 import { Song } from "../../types/song";
 import { playTimes } from "../../constants";
+import { musicVideos } from "../../../server/data/mvs";
 
-import { Button, Guess, YTPlayer, Search, Result, Player } from "../";
+import { Button, Guess, YTPlayer, Search, Result, Player, MVPlayer } from "../";
 
 import * as Styled from "./index.styled";
 
@@ -17,7 +18,7 @@ interface Props {
   setSelectedSong: React.Dispatch<React.SetStateAction<Song | undefined>>;
   skip: () => void;
   guess: () => void;
-  mode?: "daily" | "unlimited";
+  mode?: "daily" | "unlimited" | "dailyMV";
   onPlayAgain?: () => void;
   isSubmitting?: boolean;
 }
@@ -39,27 +40,36 @@ export function Game({
   onPlayAgain,
   isSubmitting = false,
 }: Props) {
-  const recentFinishedPlay = localStorage.getItem("recentFinishedPlay");
+  const recentFinishedPlay =
+    mode === "dailyMV"
+      ? localStorage.getItem("recentFinishedPlayMV")
+      : localStorage.getItem("recentFinishedPlay");
   const hasFinishedCurrentRound = didGuess || currentTry >= guesses.length;
   const hasFinishedResponseDaily =
-    mode === "daily" && !!dailyDate && recentFinishedPlay === dailyDate;
-  const isGameOver = hasFinishedCurrentRound || hasFinishedResponseDaily;
+    (mode === "daily" || mode === "dailyMV") &&
+    !!dailyDate &&
+    recentFinishedPlay === dailyDate;
   const isBlocked =
-    mode === "daily" &&
+    (mode === "daily" || mode === "dailyMV") &&
     !!dailyDate &&
     !hasFinishedResponseDaily &&
     new Date(getUtcDate()) > new Date(dailyDate);
   const sessionDate = dailyDate ?? getUtcDate();
 
   React.useEffect(() => {
-    if (mode !== "daily") return;
+    if (mode !== "daily" && mode !== "dailyMV") return;
     if (!hasFinishedCurrentRound) return;
-    localStorage.setItem("recentFinishedPlay", sessionDate);
 
-    const historicalPlayData = localStorage.getItem("historicalPlayData");
+    const storageKey =
+      mode === "dailyMV" ? "recentFinishedPlayMV" : "recentFinishedPlay";
+    localStorage.setItem(storageKey, sessionDate);
+
+    const historicalKey =
+      mode === "dailyMV" ? "historicalPlayDataMV" : "historicalPlayData";
+    const historicalPlayData = localStorage.getItem(historicalKey);
     if (historicalPlayData === null) {
       localStorage.setItem(
-        "historicalPlayData",
+        historicalKey,
         JSON.stringify({
           sessionDates: [sessionDate],
           guesses: [currentTry],
@@ -70,7 +80,7 @@ export function Game({
       const parsedData = JSON.parse(historicalPlayData);
       if (parsedData.sessionDates.includes(sessionDate)) return;
       localStorage.setItem(
-        "historicalPlayData",
+        historicalKey,
         JSON.stringify({
           sessionDates: [...parsedData.sessionDates, sessionDate],
           guesses: [...parsedData.guesses, currentTry],
@@ -81,17 +91,23 @@ export function Game({
   }, [mode, hasFinishedCurrentRound, sessionDate, currentTry, didGuess]);
 
   if (isBlocked) {
-    return <h1>Daily MIXX is not available yet. Check back soon!</h1>;
+    return (
+      <h1>
+        {mode === "dailyMV"
+          ? "Daily MV is not available yet. Check back soon!"
+          : "Daily MIXX is not available yet. Check back soon!"}
+      </h1>
+    );
   }
 
-  if (isGameOver) {
+  if (hasFinishedCurrentRound || hasFinishedResponseDaily) {
     return (
       <Result
         didGuess={didGuess}
         currentTry={currentTry}
         todaysSolution={todaysSolution}
         guesses={guesses}
-        mode={mode}
+        mode={mode === "dailyMV" ? "daily" : mode}
         sessionDate={sessionDate}
         onPlayAgain={onPlayAgain}
       />
@@ -105,17 +121,25 @@ export function Game({
       ))}
       {mode === "unlimited" ? (
         <YTPlayer id={todaysSolution.youtubeId} currentTry={currentTry} />
+      ) : mode === "dailyMV" ? (
+        <MVPlayer currentTry={currentTry} date={sessionDate} />
       ) : (
         <Player currentTry={currentTry} />
       )}
 
-      <Search currentTry={currentTry} setSelectedSong={setSelectedSong} />
+      <Search
+        currentTry={currentTry}
+        setSelectedSong={setSelectedSong}
+        songs={mode === "dailyMV" ? musicVideos : undefined}
+      />
       <Styled.Buttons>
         <Button onClick={skip}>
           {isSubmitting
             ? "Skipping..."
             : currentTry === 5
             ? "Give Up"
+            : mode === "dailyMV"
+            ? "Skip +1 frame"
             : `Skip +${playTimes[currentTry] / 1000}s`}
         </Button>
         <Button variant="green" onClick={guess}>

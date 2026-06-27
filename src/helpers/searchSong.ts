@@ -5,10 +5,11 @@ function fuzzyMatch(input: string): string {
   return input.toLowerCase().replace(/[^0-9a-z ]/gi, "");
 }
 
-export function searchSong(searchTerm: string): Song[] {
+export function searchSong(searchTerm: string, pool?: Song[]): Song[] {
   const normalizedSearch = fuzzyMatch(searchTerm);
+  const source = pool ?? songs; //if no pool is provided, use the default k-heardle songs list
 
-  return songs
+  return source
     .filter((song: Song) => {
       const songName = fuzzyMatch(song.name);
       const songArtist = fuzzyMatch(song.artist);

@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 from datetime import datetime, timedelta
 import yt_dlp
 import time
+from frame_generator import generate_daily_random_frames
 
 load_dotenv()
 
@@ -21,6 +22,12 @@ HEARDLE_SALT = (
 )
 NTFY_URL = os.getenv("NTFY_URL")
 NTFY_TOKEN = os.getenv("NTFY_TOKEN")
+
+def fetch_instance_info() -> dict:
+    if not API_URL:
+        raise ValueError("Missing API_URL in environment.")
+    response = requests.get(f"{API_URL}/info")
+    return response.json()
 
 def send_notification(message: str):
     if not NTFY_URL or not NTFY_TOKEN:
@@ -64,6 +71,19 @@ def fetch_daily() -> dict:
     payload = response.json()
     if "date" not in payload or "data" not in payload:
         raise ValueError(f"Unexpected /today response shape: {payload}")
+
+    return payload
+
+def fetch_daily_mv() -> dict:
+    if not API_URL:
+        raise ValueError("Missing API_URL in environment.")
+
+    url = f"{API_URL}/todayMV"
+    response = requests.get(url, timeout=15)
+    response.raise_for_status()
+    payload = response.json()
+    if "date" not in payload or "data" not in payload:
+        raise ValueError(f"Unexpected /todayMV response shape: {payload}")
 
     return payload
 
@@ -137,6 +157,9 @@ def read_json(file_path, default=None):
         return default
 
 def main():
+    info = fetch_instance_info()
+    dailyMV = info.get("dailyMV", False)
+
     new_data = False
     daily_data = fetch_daily()
     attempt = 0
@@ -170,6 +193,51 @@ def main():
     three_days_ago = (datetime.now() - timedelta(days=3)).strftime("%Y-%m-%d")
     delete_from_r2(f"kheardle/{three_days_ago}.mp3")
     send_notification(f"K-HEARDLE: Deleted old clip for {three_days_ago}")
+
+    if dailyMV:
+        print("Starting Daily MV Generation")
+        mv_data = fetch_daily_mv()
+        mv_decoded = decode_data(mv_data["data"], mv_data["date"])
+        mv_youtube_id = mv_decoded["youtubeId"]
+        mv_date = mv_data["date"]
+
+        mv_output_dir = f"frames_mv_{mv_date}"
+        try:
+            generate_daily_random_frames(
+                f"https://www.youtube.com/watch?v={mv_youtube_id}",
+                mv_output_dir,
+                count=3,
+            )
+        except Exception:
+            print(f"Failed to generate MV frames for {mv_youtube_id}")
+            send_notification(f"K-HEARDLE: Failed to generate MV frames for {mv_youtube_id}")
+            return
+
+        mv_frame_files = sorted(
+            f for f in os.listdir(mv_output_dir)
+            if f.startswith("frame-") and f.endswith(".jpg")
+        )
+        if len(mv_frame_files) < 3:
+            print(f"Only generated {len(mv_frame_files)} MV frames for {mv_youtube_id}")
+            send_notification(f"K-HEARDLE: Only generated {len(mv_frame_files)} MV frames for {mv_youtube_id}")
+            return
+
+        try:
+            for i, fname in enumerate(mv_frame_files[:3], start=1):
+                local_path = os.path.join(mv_output_dir, fname)
+                object_key = f"kheardle/k-heardle-mvs/{mv_date}/{i}.jpg"
+                upload_to_r2(local_path, object_key)
+                print(f"Uploaded {object_key}")
+        except Exception:
+            print(f"Failed to upload MV frames for {mv_date}")
+            send_notification(f"K-HEARDLE: Failed to upload MV frames for {mv_date}")
+            return
+        finally:
+            for fname in mv_frame_files:
+                delete_file(os.path.join(mv_output_dir, fname))
+            os.rmdir(mv_output_dir)
+        write_json("save_mv.json", mv_data)
+        send_notification(f"K-HEARDLE: Successfully generated MV frames for {mv_date} UTC")
 
 if __name__ == "__main__":
     main()

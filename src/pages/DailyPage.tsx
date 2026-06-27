@@ -99,7 +99,7 @@ export function DailyPage() {
   return (
     <main>
       <Header openInfoPopUp={openInfoPopUp} />
-      {isInfoPopUpOpen && <InfoPopUp onClose={closeInfoPopUp} />}
+      {isInfoPopUpOpen && <InfoPopUp onClose={closeInfoPopUp} gameMode="daily"/>}
       <Styled.Container>
         <Game
           guesses={guesses}
