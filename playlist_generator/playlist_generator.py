@@ -81,10 +81,16 @@ def main():
     parser.add_argument("urls_file")
     parser.add_argument("output_file", default="../server/data/songs.ts")
     args = parser.parse_args()
-    with open(args.output_file, "r", encoding="utf-8") as f:
-        text = f.read()
-    array_text = re.search(r"\[.*\]", text, re.S).group(0)
-    songs = json5.loads(array_text)
+    songs = []
+    try:
+        with open(args.output_file, "r", encoding="utf-8") as f:
+            text = f.read()
+
+        if text.strip():
+            array_text = re.search(r"\[.*\]", text, re.S).group(0)
+            songs = json5.loads(array_text)
+    except (AttributeError, json5.JSON5DecodeError):
+        songs = []
     generator = PlaylistGenerator(songs)
     urls = generator.get_urls_from_file(args.urls_file)
     video_info = generator.extract(urls)
