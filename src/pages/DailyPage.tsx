@@ -18,7 +18,6 @@ export function DailyPage() {
     state: undefined,
   } as GuessType;
 
-  // --- Stats import logic ---
   function reloadWithoutQueryParameters() {
     location.replace(location.pathname);
   }

@@ -9,8 +9,8 @@ interface Props {
 const MV_CDN_URL = import.meta.env.VITE_CDN_URL || "";
 
 function getRevealedCount(currentTry: number): number {
-  if (currentTry >= 6) return 3;
-  if (currentTry >= 3) return 2;
+  if (currentTry >= 5) return 3;
+  if (currentTry >= 2) return 2;
   return 1;
 }
 
@@ -70,7 +70,6 @@ export function MVPlayer({ currentTry, date }: Props) {
           : "All frames revealed."}
       </Styled.Hint>
 
-      {/* Lightbox */}
       {activeImage && (
         <Styled.Overlay onClick={() => setActiveImage(null)}>
           <Styled.LightboxImage
