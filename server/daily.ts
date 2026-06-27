@@ -2,7 +2,6 @@ import { Router } from "express";
 import rateLimit from "express-rate-limit";
 import {
   buildSessionToken,
-  getDailySong,
   getUtcDate,
   GuessEntry,
   normalizeSignedState,
@@ -11,6 +10,7 @@ import {
   signState,
   verifySessionToken,
   verifyStateSignature,
+  getDailySong,
 } from "./shared";
 
 export const dailyRouter = Router();

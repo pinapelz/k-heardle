@@ -52,7 +52,7 @@ function hashString(str: string): number {
   return hash;
 }
 
-export function getDailySong(date: string): Song {
+export function pickSong(date: string): Song {
   const seed = hashString(date);
   const index = seed % songs.length;
   return songs[index];
@@ -68,12 +68,11 @@ function getLastNDates(n: number): string[] {
   return dates;
 }
 
-export function getDailySongNoRepeat(): Song {
-  const today = getUtcDate();
+export function getDailySong(today: string): Song {
   const recentSongs = new Set(
-    getLastNDates(30).map(d => getDailySong(d).youtubeId)
+    getLastNDates(30).map(d => pickSong(d).youtubeId)
   );
-  let candidate = getDailySong(today);
+  let candidate = pickSong(today);
   let guard = 0;
   while (recentSongs.has(candidate.youtubeId) && guard < songs.length) {
     const rerollSeed = hashString(today + ":" + guard);
