@@ -1,6 +1,10 @@
-import { createHmac, timingSafeEqual } from "crypto";
+import { createHash, createHmac, timingSafeEqual } from "crypto";
 import { songs } from "./data/songs";
 import { musicVideos } from "./data/mvs";
+
+const DAILY_START_DATE = "2026-06-01T00:00:00Z";
+const DAILY_START_MS = Date.parse(DAILY_START_DATE);
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
 
 function getSalt(): string {
@@ -46,54 +50,56 @@ export function getUtcDate(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
-function hashString(str: string): number {
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    hash = (hash * 31 + str.charCodeAt(i)) >>> 0;
+function daysSinceStart(date: string): number {
+  const ms = Date.parse(date.length === 10 ? `${date}T00:00:00Z` : date);
+  if (Number.isNaN(ms)) {
+    throw new Error(`Invalid date: ${date}`);
   }
-  return hash;
+  return Math.floor((ms - DAILY_START_MS) / MS_PER_DAY);
 }
+
+function seededPRNG(seed: string): () => number {
+  let counter = 0;
+  return () => {
+    counter++;
+    const hash = createHash("sha256")
+      .update(`${seed}:${counter}`)
+      .digest();
+    const int = hash.readUInt32BE(0);
+    return int / 0x100000000;
+  };
+}
+
+function shuffleSongs<T>(seed: string, list: readonly T[]): T[] {
+  const result = list.slice();
+  const rng = seededPRNG(seed);
+  for (let i = result.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    [result[i], result[j]] = [result[j], result[i]];
+  }
+  return result;
+}
+
+export const DAILY_SONG_ORDER: Song[] = shuffleSongs(getSalt(), songs);
+export const DAILY_MV_ORDER: Song[] = shuffleSongs(getSalt() + "-mv", musicVideos);
 
 export function pickSong(date: string): Song {
-  const seed = hashString(date);
-  const index = seed % songs.length;
-  return songs[index];
-}
-
-
-function getLastNDates(n: number): string[] {
-  const dates: string[] = [];
-  for (let i = 1; i <= n; i++) {
-    const d = new Date();
-    d.setUTCDate(d.getUTCDate() - i);
-    dates.push(d.toISOString().slice(0, 10));
-  }
-  return dates;
+  const day = daysSinceStart(date);
+  const index = ((day % DAILY_SONG_ORDER.length) + DAILY_SONG_ORDER.length) % DAILY_SONG_ORDER.length;
+  return DAILY_SONG_ORDER[index];
 }
 
 export function getDailySong(today: string): Song {
-  const recentSongs = new Set(
-    getLastNDates(30).map(d => pickSong(d).youtubeId)
-  );
-  let candidate = pickSong(today);
-  let guard = 0;
-  while (recentSongs.has(candidate.youtubeId) && guard < songs.length) {
-    const rerollSeed = hashString(today + ":" + guard);
-    const index = rerollSeed % songs.length;
-    candidate = songs[index];
-    guard++;
-  }
-  return candidate;
+  return pickSong(today);
 }
 
 export function pickMusicVideo(date: string): Song {
-  const seed = hashString(date);
-  const index = seed % musicVideos.length;
-  return musicVideos[index];
+  const day = daysSinceStart(date);
+  const index = ((day % DAILY_MV_ORDER.length) + DAILY_MV_ORDER.length) % DAILY_MV_ORDER.length;
+  return DAILY_MV_ORDER[index];
 }
 
 export function getDailyMusicVideo(today: string): Song {
-  // potentially use deterministic no-repeat here too, for now this is fine
   return pickMusicVideo(today);
 }
 
