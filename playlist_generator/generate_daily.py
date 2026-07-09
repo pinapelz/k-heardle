@@ -3,6 +3,7 @@ import boto3
 import json
 import requests
 import random
+import argparse
 from dotenv import load_dotenv
 from datetime import datetime, timedelta
 import yt_dlp
@@ -157,44 +158,49 @@ def read_json(file_path, default=None):
         return default
 
 def main():
+    parser = argparse.ArgumentParser(description="Generate daily Heardle track and/or MV frames.")
+    parser.add_argument("--only-mv", action="store_true", help="Only generate the daily MV frames.")
+    args = parser.parse_args()
+
     info = fetch_instance_info()
     dailyMV = info.get("dailyMV", False)
 
-    new_data = False
-    daily_data = fetch_daily()
-    attempt = 0
-    while not new_data:
-        dumped_data = read_json("save.json")
-        if dumped_data == daily_data:
-            attempt += 1
-            print(f"Server still returning old data, waiting... {attempt} ")
-            time.sleep(5)
-        else:
-            new_data = True
+    if not args.only_mv:
+        new_data = False
         daily_data = fetch_daily()
-    data = decode_data(daily_data["data"], daily_data["date"])
-    youtube_id = data["youtubeId"]
-    try:
-        clip_path = download_random_segment_mp3(youtube_id)
-    except:
-        print(f"Failed to download clip for {youtube_id}")
-        send_notification(f"K-HEARDLE: Failed to download clip for {youtube_id}")
-        return
-    date = daily_data["date"]
-    try:
-        upload_to_r2(clip_path, f"kheardle/{date}.mp3")
-        delete_file(clip_path)
-    except:
-        print(f"Failed to upload clip for {date}")
-        send_notification(f"K-HEARDLE: Failed to upload clip for {date}")
-        return
-    write_json("save.json", daily_data)
-    send_notification(f"K-HEARDLE: Successfully generated daily track for {date} UTC")
-    three_days_ago = (datetime.now() - timedelta(days=3)).strftime("%Y-%m-%d")
-    delete_from_r2(f"kheardle/{three_days_ago}.mp3")
-    send_notification(f"K-HEARDLE: Deleted old clip for {three_days_ago}")
+        attempt = 0
+        while not new_data:
+            dumped_data = read_json("save.json")
+            if dumped_data == daily_data:
+                attempt += 1
+                print(f"Server still returning old data, waiting... {attempt} ")
+                time.sleep(5)
+            else:
+                new_data = True
+            daily_data = fetch_daily()
+        data = decode_data(daily_data["data"], daily_data["date"])
+        youtube_id = data["youtubeId"]
+        try:
+            clip_path = download_random_segment_mp3(youtube_id)
+        except:
+            print(f"Failed to download clip for {youtube_id}")
+            send_notification(f"K-HEARDLE: Failed to download clip for {youtube_id}")
+            return
+        date = daily_data["date"]
+        try:
+            upload_to_r2(clip_path, f"kheardle/{date}.mp3")
+            delete_file(clip_path)
+        except:
+            print(f"Failed to upload clip for {date}")
+            send_notification(f"K-HEARDLE: Failed to upload clip for {date}")
+            return
+        write_json("save.json", daily_data)
+        send_notification(f"K-HEARDLE: Successfully generated daily track for {date} UTC")
+        three_days_ago = (datetime.now() - timedelta(days=3)).strftime("%Y-%m-%d")
+        delete_from_r2(f"kheardle/{three_days_ago}.mp3")
+        send_notification(f"K-HEARDLE: Deleted old clip for {three_days_ago}")
 
-    if dailyMV:
+    if args.only_mv or dailyMV:
         print("Starting Daily MV Generation")
         mv_data = fetch_daily_mv()
         mv_decoded = decode_data(mv_data["data"], mv_data["date"])
