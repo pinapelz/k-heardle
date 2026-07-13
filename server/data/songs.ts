@@ -177,7 +177,6 @@ export const songs = [
 { artist: "LE SSERAFIM", name: "Swan Song", youtubeId: "eNxb2wt11sM" },
 { artist: "KISS OF LIFE", name: "Bye My Neverland", youtubeId: "f1yerx1PWC4" },
 { artist: "tripleS", name: "Girls' Capitalism", youtubeId: "G0hLAX-bg3w" },
-{ artist: "NewJeans", name: "Our Night is more beautiful than your Day", youtubeId: "AmzIk-4Fj2s" },
 { artist: "aespa", name: "Illusion", youtubeId: "LP9sF1v-vz4" },
 { artist: "NMIXX", name: "BOOM", youtubeId: "QQjLJ8MjZMc" },
 { artist: "aespa", name: "Dreams Come True", youtubeId: "zZDdP0V3pVw" },
