@@ -121,7 +121,7 @@ export const songs = [
 { artist: "ILLIT", name: "It’s Me", youtubeId: "bMhDJ0S0OBA" },
 { artist: "ILLIT", name: "jellyous", youtubeId: "GkG60kISnfc" },
 { artist: "ILLIT", name: "NOT CUTE ANYMORE", youtubeId: "x_RYZsOfpKY" },
-{ artist: "ILLIT", name: "ICONIC BY MISTAKE", youtubeId: "27C4pfRsf9g" },
+{ artist: "ILLIT; LE SSERAFIM; KATSEYE", name: "ICONIC BY MISTAKE", youtubeId: "27C4pfRsf9g" },
 { artist: "ILLIT", name: "Cherish (My Love)", youtubeId: "tbDGl7jEazA" },
 { artist: "ILLIT", name: "Sunday Morning", youtubeId: "-01oDwXKSuE" },
 { artist: "ILLIT", name: "Almond Chocolate", youtubeId: "qlgEadao-Sk" },
