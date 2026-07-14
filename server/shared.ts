@@ -1,6 +1,6 @@
 import { createHash, createHmac, timingSafeEqual } from "crypto";
 import { songs } from "./data/songs";
-import { musicVideos } from "./data/mvs";
+import { songs as musicVideos } from "./data/mvs";
 
 const DAILY_START_DATE = "2026-06-01T00:00:00Z";
 const DAILY_START_MS = Date.parse(DAILY_START_DATE);

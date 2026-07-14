@@ -3,7 +3,7 @@ import React from "react";
 import { GuessType } from "../../types/guess";
 import { Song } from "../../types/song";
 import { playTimes } from "../../constants";
-import { musicVideos } from "../../../server/data/mvs";
+import { songs as musicVideos } from "../../../server/data/mvs";
 
 import { Button, Guess, YTPlayer, Search, Result, Player, MVPlayer } from "../";
 
