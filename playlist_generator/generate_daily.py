@@ -17,6 +17,7 @@ ACCESS_KEY = os.getenv("R2_ACCESS_KEY")
 SECRET_KEY = os.getenv("R2_SECRET_KEY")
 BUCKET = os.getenv("R2_BUCKET")
 API_URL = os.getenv("API_URL")
+MAX_RETRIES = os.getenv("MAX_RETRIES", 10)
 HEARDLE_SALT = (
     os.getenv("VITE_HEARDLE_SALT")
     or os.getenv("OBFUSCATION_KEY")
@@ -202,7 +203,18 @@ def main():
 
     if args.only_mv or dailyMV:
         print("Starting Daily MV Generation")
+        mv_new_data = False
         mv_data = fetch_daily_mv()
+        mv_attempt = 0
+        while not mv_new_data:
+            mv_dumped_data = read_json("save_mv.json")
+            if mv_dumped_data == mv_data:
+                mv_attempt += 1
+                print(f"Server still returning old MV data, waiting... {mv_attempt} ")
+                time.sleep(5)
+            else:
+                mv_new_data = True
+            mv_data = fetch_daily_mv()
         mv_decoded = decode_data(mv_data["data"], mv_data["date"])
         mv_youtube_id = mv_decoded["youtubeId"]
         mv_date = mv_data["date"]
