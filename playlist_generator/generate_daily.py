@@ -17,7 +17,7 @@ ACCESS_KEY = os.getenv("R2_ACCESS_KEY")
 SECRET_KEY = os.getenv("R2_SECRET_KEY")
 BUCKET = os.getenv("R2_BUCKET")
 API_URL = os.getenv("API_URL")
-MAX_RETRIES = os.getenv("MAX_RETRIES", 10)
+MAX_RETRIES = int(os.getenv("MAX_RETRIES", "10"))
 HEARDLE_SALT = (
     os.getenv("VITE_HEARDLE_SALT")
     or os.getenv("OBFUSCATION_KEY")
@@ -170,7 +170,7 @@ def main():
         new_data = False
         daily_data = fetch_daily()
         attempt = 0
-        while not new_data:
+        while not new_data and attempt < MAX_RETRIES:
             dumped_data = read_json("save.json")
             if dumped_data == daily_data:
                 attempt += 1
@@ -206,7 +206,7 @@ def main():
         mv_new_data = False
         mv_data = fetch_daily_mv()
         mv_attempt = 0
-        while not mv_new_data:
+        while not mv_new_data and mv_attempt < MAX_RETRIES:
             mv_dumped_data = read_json("save_mv.json")
             if mv_dumped_data == mv_data:
                 mv_attempt += 1
