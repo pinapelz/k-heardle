@@ -5,7 +5,7 @@ import requests
 import random
 import argparse
 from dotenv import load_dotenv
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import yt_dlp
 import time
 from frame_generator import generate_daily_random_frames
@@ -167,95 +167,103 @@ def main():
     dailyMV = info.get("dailyMV", False)
 
     if not args.only_mv:
-        new_data = False
-        daily_data = fetch_daily()
-        attempt = 0
-        while not new_data and attempt < MAX_RETRIES:
-            dumped_data = read_json("save.json")
-            if dumped_data == daily_data:
+        target_date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+        print(f"Target date is {target_date} UTC")
+
+        dumped_data = read_json("save.json")
+        if dumped_data.get("date") == target_date:
+            print(f"Daily track for {target_date} already generated according to save.json. Skipping.")
+        else:
+            attempt = 0
+            while True:
+                daily_data = fetch_daily()
+                if daily_data["date"] == target_date:
+                    break
                 attempt += 1
-                print(f"Server still returning old data, waiting... {attempt} ")
+                print(f"Server is returning date {daily_data['date']}, waiting for {target_date}... (attempt {attempt})")
                 time.sleep(5)
-            else:
-                new_data = True
-            daily_data = fetch_daily()
-        data = decode_data(daily_data["data"], daily_data["date"])
-        youtube_id = data["youtubeId"]
-        try:
-            clip_path = download_random_segment_mp3(youtube_id)
-        except:
-            print(f"Failed to download clip for {youtube_id}")
-            send_notification(f"K-HEARDLE: Failed to download clip for {youtube_id}")
-            return
-        date = daily_data["date"]
-        try:
-            upload_to_r2(clip_path, f"kheardle/{date}.mp3")
-            delete_file(clip_path)
-        except:
-            print(f"Failed to upload clip for {date}")
-            send_notification(f"K-HEARDLE: Failed to upload clip for {date}")
-            return
-        write_json("save.json", daily_data)
-        send_notification(f"K-HEARDLE: Successfully generated daily track for {date} UTC")
-        three_days_ago = (datetime.now() - timedelta(days=3)).strftime("%Y-%m-%d")
-        delete_from_r2(f"kheardle/{three_days_ago}.mp3")
-        send_notification(f"K-HEARDLE: Deleted old clip for {three_days_ago}")
+
+            data = decode_data(daily_data["data"], daily_data["date"])
+            youtube_id = data["youtubeId"]
+            try:
+                clip_path = download_random_segment_mp3(youtube_id)
+            except:
+                print(f"Failed to download clip for {youtube_id}")
+                send_notification(f"K-HEARDLE: Failed to download clip for {youtube_id}")
+                return
+            date = daily_data["date"]
+            try:
+                upload_to_r2(clip_path, f"kheardle/{date}.mp3")
+                delete_file(clip_path)
+            except:
+                print(f"Failed to upload clip for {date}")
+                send_notification(f"K-HEARDLE: Failed to upload clip for {date}")
+                return
+            write_json("save.json", daily_data)
+            send_notification(f"K-HEARDLE: Successfully generated daily track for {date} UTC")
+            three_days_ago = (datetime.now(timezone.utc) - timedelta(days=3)).strftime("%Y-%m-%d")
+            delete_from_r2(f"kheardle/{three_days_ago}.mp3")
+            send_notification(f"K-HEARDLE: Deleted old clip for {three_days_ago}")
 
     if args.only_mv or dailyMV:
         print("Starting Daily MV Generation")
-        mv_new_data = False
-        mv_data = fetch_daily_mv()
-        mv_attempt = 0
-        while not mv_new_data and mv_attempt < MAX_RETRIES:
-            mv_dumped_data = read_json("save_mv.json")
-            if mv_dumped_data == mv_data:
-                mv_attempt += 1
-                print(f"Server still returning old MV data, waiting... {mv_attempt} ")
+        target_date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+
+        dumped_mv_data = read_json("save_mv.json")
+        if dumped_mv_data.get("date") == target_date:
+            print(f"Daily MV frames for {target_date} already generated according to save_mv.json. Skipping.")
+        else:
+            attempt = 0
+            while True:
+                mv_data = fetch_daily_mv()
+                if mv_data["date"] == target_date:
+                    break
+                attempt += 1
+                print(f"Server is returning MV date {mv_data['date']}, waiting for {target_date}... (attempt {attempt})")
                 time.sleep(5)
-            else:
-                mv_new_data = True
-            mv_data = fetch_daily_mv()
-        mv_decoded = decode_data(mv_data["data"], mv_data["date"])
-        mv_youtube_id = mv_decoded["youtubeId"]
-        mv_date = mv_data["date"]
 
-        mv_output_dir = f"frames_mv_{mv_date}"
-        try:
-            generate_daily_random_frames(
-                f"https://www.youtube.com/watch?v={mv_youtube_id}",
-                mv_output_dir,
-                count=3,
+            mv_decoded = decode_data(mv_data["data"], mv_data["date"])
+            mv_youtube_id = mv_decoded["youtubeId"]
+            mv_date = mv_data["date"]
+
+            mv_output_dir = f"frames_mv_{mv_date}"
+            try:
+                generate_daily_random_frames(
+                    f"https://www.youtube.com/watch?v={mv_youtube_id}",
+                    mv_output_dir,
+                    count=3,
+                )
+            except Exception:
+                print(f"Failed to generate MV frames for {mv_youtube_id}")
+                send_notification(f"K-HEARDLE: Failed to generate MV frames for {mv_youtube_id}")
+                return
+
+            mv_frame_files = sorted(
+                f for f in os.listdir(mv_output_dir)
+                if f.startswith("frame-") and f.endswith(".jpg")
             )
-        except Exception:
-            print(f"Failed to generate MV frames for {mv_youtube_id}")
-            send_notification(f"K-HEARDLE: Failed to generate MV frames for {mv_youtube_id}")
-            return
+            if len(mv_frame_files) < 3:
+                print(f"Only generated {len(mv_frame_files)} MV frames for {mv_youtube_id}")
+                send_notification(f"K-HEARDLE: Only generated {len(mv_frame_files)} MV frames for {mv_youtube_id}")
+                return
 
-        mv_frame_files = sorted(
-            f for f in os.listdir(mv_output_dir)
-            if f.startswith("frame-") and f.endswith(".jpg")
-        )
-        if len(mv_frame_files) < 3:
-            print(f"Only generated {len(mv_frame_files)} MV frames for {mv_youtube_id}")
-            send_notification(f"K-HEARDLE: Only generated {len(mv_frame_files)} MV frames for {mv_youtube_id}")
-            return
-
-        try:
-            for i, fname in enumerate(mv_frame_files[:3], start=1):
-                local_path = os.path.join(mv_output_dir, fname)
-                object_key = f"kheardle/k-heardle-mvs/{mv_date}/{i}.jpg"
-                upload_to_r2(local_path, object_key)
-                print(f"Uploaded {object_key}")
-        except Exception:
-            print(f"Failed to upload MV frames for {mv_date}")
-            send_notification(f"K-HEARDLE: Failed to upload MV frames for {mv_date}")
-            return
-        finally:
-            for fname in mv_frame_files:
-                delete_file(os.path.join(mv_output_dir, fname))
-            os.rmdir(mv_output_dir)
-        write_json("save_mv.json", mv_data)
-        send_notification(f"K-HEARDLE: Successfully generated MV frames for {mv_date} UTC")
+            try:
+                for i, fname in enumerate(mv_frame_files[:3], start=1):
+                    local_path = os.path.join(mv_output_dir, fname)
+                    object_key = f"kheardle/k-heardle-mvs/{mv_date}/{i}.jpg"
+                    upload_to_r2(local_path, object_key)
+                    print(f"Uploaded {object_key}")
+            except Exception:
+                print(f"Failed to upload MV frames for {mv_date}")
+                send_notification(f"K-HEARDLE: Failed to upload MV frames for {mv_date}")
+                return
+            finally:
+                for fname in mv_frame_files:
+                    delete_file(os.path.join(mv_output_dir, fname))
+                if os.path.exists(mv_output_dir):
+                    os.rmdir(mv_output_dir)
+            write_json("save_mv.json", mv_data)
+            send_notification(f"K-HEARDLE: Successfully generated MV frames for {mv_date} UTC")
 
 if __name__ == "__main__":
     main()
