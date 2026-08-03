@@ -65,6 +65,7 @@
   "devDependencies": {
     "@babel/core": "^7.29.7",
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
+    "@types/better-sqlite3": "^9.6.0",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
     "@types/lodash": "^4.17.25",

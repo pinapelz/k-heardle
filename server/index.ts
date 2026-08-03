@@ -3,6 +3,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import { dailyRouter } from "./daily";
 import { selectRouter } from "./select";
+import "./db/schema"
 
 dotenv.config();
 
