@@ -1,4 +1,8 @@
 export const songs = [
+{ artist: "fromis_9", name: "Vitamin ME", youtubeId: "sLk8zWUuYTA" },
+{ artist: "aespa", name: "KISS N TELL", youtubeId: "inxzQt78lOk" },
+{ artist: "ARTMS", name: "Born Stunner", youtubeId: "TZ_yEXvJcYA" },
+{ artist: "ILLIT", name: "I Got Your Back (Feat. JISOO, MOMOKA of HANA)", youtubeId: "_Pk6xfju3l0" },
 { artist: "aespa", name: "Supernova", youtubeId: "phuiiNCxRMg" },
 { artist: "aespa", name: "Spicy", youtubeId: "Os_heh8vPfs" },
 { artist: "ILLIT", name: "Magnetic", youtubeId: "Vk5-c_v4gMU" },
