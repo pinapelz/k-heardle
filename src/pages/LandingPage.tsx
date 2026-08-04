@@ -29,6 +29,11 @@ const Container = styled.div`
   min-height: 70vh;
   padding: 24px;
   gap: 18px;
+
+  @media (max-width: 480px) {
+    padding: 16px;
+    gap: 14px;
+  }
 `;
 
 const Hero = styled.div`
@@ -84,7 +89,7 @@ const ModeGroups = styled.div`
   flex-direction: column;
   gap: 22px;
   width: 100%;
-  max-width: 600px;
+  max-width: 540px;
 `;
 
 const ButtonGroup = styled.div`
@@ -154,33 +159,143 @@ const ModeDescription = styled.span`
   margin-top: 6px;
 `;
 
-const GroupJoinCard = styled.div`
+const GroupHub = styled.section`
   width: 100%;
-  max-width: 440px;
-  border: 1px solid var(--cl-gray-4);
-  border-radius: 8px;
-  padding: 14px;
+  max-width: 620px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+
+  @media (max-width: 480px) {
+    gap: 10px;
+  }
+`;
+
+const MembershipCard = styled.div<{ active: boolean }>`
+  border: 1px solid ${({ active }) => (active ? "var(--cl-cyan-6)" : "var(--cl-gray-4)")};
+  border-radius: 10px;
+  padding: 16px;
+  background: var(--cl-gray-1);
   display: flex;
   flex-direction: column;
   gap: 10px;
 `;
 
-const ExpandButton = styled.button`
+const MembershipTitleRow = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+`;
+
+const MembershipTitle = styled.h3`
+  margin: 0;
+  font-family: "Roboto Mono", monospace;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--cl-white);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+`;
+
+const MembershipBadge = styled.span<{ active: boolean }>`
+  border: 1px solid ${({ active }) => (active ? "var(--cl-cyan-6)" : "var(--cl-gray-5)")};
+  color: ${({ active }) => (active ? "var(--cl-cyan-6)" : "var(--cl-gray-6)")};
+  border-radius: 999px;
+  padding: 3px 8px;
+  font-family: "Roboto Mono", monospace;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+`;
+
+const MembershipSummary = styled.p`
+  margin: 0;
+  font-family: "Roboto Mono", monospace;
+  font-size: 0.82rem;
+  color: var(--cl-gray-7);
+`;
+
+const MembershipGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+
+  @media (max-width: 680px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const MembershipDetail = styled.div`
+  border: 1px solid var(--cl-gray-3);
+  border-radius: 8px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+`;
+
+const MembershipDetailLabel = styled.span`
+  font-family: "Roboto Mono", monospace;
+  font-size: 0.68rem;
+  color: var(--cl-gray-6);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+`;
+
+const MembershipDetailValue = styled.span`
+  font-family: "Roboto Mono", monospace;
+  font-size: 0.86rem;
+  color: var(--cl-white);
+  word-break: break-word;
+`;
+
+const GroupActions = styled.div`
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+
+  @media (max-width: 680px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const GroupActionPanel = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+`;
+
+const ActionToggle = styled.button<{ active?: boolean }>`
   width: 100%;
-  max-width: 440px;
-  border: 1px solid var(--cl-gray-4);
+  border: 1px solid ${({ active }) => (active ? "var(--cl-cyan-6)" : "var(--cl-gray-4)")};
   border-radius: 8px;
   background: transparent;
-  color: var(--cl-white);
-  padding: 12px 14px;
+  color: ${({ active }) => (active ? "var(--cl-cyan-6)" : "var(--cl-white)")};
+  padding: 10px 12px;
   font-family: "Roboto Mono", monospace;
-  font-size: 0.88rem;
+  font-size: 0.82rem;
   font-weight: 700;
   text-align: left;
   cursor: pointer;
 
   &:hover {
     border-color: var(--cl-cyan-6);
+  }
+`;
+
+const GroupCard = styled.div`
+  border: 1px solid var(--cl-gray-4);
+  border-radius: 10px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: var(--cl-gray-1);
+
+  @media (max-width: 480px) {
+    padding: 12px;
   }
 `;
 
@@ -196,17 +311,28 @@ const GroupJoinRow = styled.div`
   display: flex;
   gap: 10px;
   flex-wrap: wrap;
+
+  @media (max-width: 640px) {
+    flex-direction: column;
+    flex-wrap: nowrap;
+    gap: 8px;
+  }
 `;
 
 const GroupInput = styled.input`
   flex: 1;
-  min-width: 180px;
+  min-width: 160px;
   background: transparent;
   border: 1px solid var(--cl-gray-4);
   color: var(--cl-white);
   padding: 10px;
   font-family: "Roboto Mono", monospace;
   font-size: 0.8rem;
+
+  @media (max-width: 640px) {
+    width: 100%;
+    min-width: 0;
+  }
 `;
 
 const JoinButton = styled.button`
@@ -222,6 +348,15 @@ const JoinButton = styled.button`
   &:hover {
     background: var(--cl-cyan-6);
     color: var(--cl-white, #fff);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  @media (max-width: 640px) {
+    width: 100%;
   }
 `;
 
@@ -298,6 +433,7 @@ export function LandingPage() {
       setCreateMessage(
         `Created ${membership.groupName}. Join token: ${membership.joinToken}`
       );
+      setJoinMessage("");
     } catch (error) {
       setCreateMessage(
         error instanceof Error ? error.message : "Unable to create group."
@@ -320,6 +456,7 @@ export function LandingPage() {
       setCurrentMembership(membership);
       localStorage.setItem("groupUsername", membership.username);
       setJoinMessage(`Joined ${membership.groupName} as ${membership.username}`);
+      setCreateMessage("");
     } catch (error) {
       setJoinMessage(
         error instanceof Error ? error.message : "Unable to join group."
@@ -364,64 +501,113 @@ export function LandingPage() {
         </div>
       </ModeGroups>
 
-      <ExpandButton onClick={() => setIsCreateOpen((open) => !open)}>
-        {isCreateOpen ? "▾" : "▸"} Create Group
-      </ExpandButton>
-      {isCreateOpen && (
-        <GroupJoinCard>
-          <GroupJoinTitle>Create Group</GroupJoinTitle>
-          <GroupJoinRow>
-            <GroupInput
-              placeholder="Group name"
-              value={groupName}
-              onChange={(event) => setGroupName(event.target.value)}
-              maxLength={64}
-            />
-            <GroupInput
-              placeholder="Username"
-              value={username}
-              onChange={(event) => setUsername(event.target.value)}
-              maxLength={32}
-            />
-            <JoinButton onClick={createNewGroup} disabled={isCreating}>
-              {isCreating ? "Creating..." : "Create"}
-            </JoinButton>
-          </GroupJoinRow>
-          {createMessage && <GroupStatus>{createMessage}</GroupStatus>}
-        </GroupJoinCard>
-      )}
+      <GroupHub>
+        <MembershipCard active={Boolean(currentMembership)}>
+          <MembershipTitleRow>
+            <MembershipTitle>Your Group</MembershipTitle>
+            <MembershipBadge active={Boolean(currentMembership)}>
+              {currentMembership ? "Active" : "Not Joined"}
+            </MembershipBadge>
+          </MembershipTitleRow>
 
-      <ExpandButton onClick={() => setIsJoinOpen((open) => !open)}>
-        {isJoinOpen ? "▾" : "▸"} Join Group
-      </ExpandButton>
-      {isJoinOpen && (
-        <GroupJoinCard>
-          <GroupJoinTitle>Join a Group</GroupJoinTitle>
-          <GroupJoinRow>
-            <GroupInput
-              placeholder="Join token"
-              value={joinToken}
-              onChange={(event) => setJoinToken(event.target.value.toUpperCase())}
-              maxLength={12}
-            />
-            <GroupInput
-              placeholder="Username"
-              value={username}
-              onChange={(event) => setUsername(event.target.value)}
-              maxLength={32}
-            />
-            <JoinButton onClick={joinGroup} disabled={isJoining}>
-              {isJoining ? "Joining..." : "Join"}
-            </JoinButton>
-          </GroupJoinRow>
-          {currentMembership && (
-            <GroupStatus>
-              Current group: {currentMembership.groupName} ({currentMembership.username})
-            </GroupStatus>
+          {currentMembership ? (
+            <>
+              <MembershipSummary>
+                You&apos;re currently playing with this group identity.
+              </MembershipSummary>
+              <MembershipGrid>
+                <MembershipDetail>
+                  <MembershipDetailLabel>Group</MembershipDetailLabel>
+                  <MembershipDetailValue>
+                    {currentMembership.groupName}
+                  </MembershipDetailValue>
+                </MembershipDetail>
+                <MembershipDetail>
+                  <MembershipDetailLabel>Username</MembershipDetailLabel>
+                  <MembershipDetailValue>
+                    {currentMembership.username}
+                  </MembershipDetailValue>
+                </MembershipDetail>
+                <MembershipDetail>
+                  <MembershipDetailLabel>Join Token</MembershipDetailLabel>
+                  <MembershipDetailValue>
+                    {currentMembership.joinToken ?? "—"}
+                  </MembershipDetailValue>
+                </MembershipDetail>
+              </MembershipGrid>
+            </>
+          ) : (
+            <MembershipSummary>
+              You&apos;re not in a group yet. Create one or join with a token below.
+            </MembershipSummary>
           )}
-          {joinMessage && <GroupStatus>{joinMessage}</GroupStatus>}
-        </GroupJoinCard>
-      )}
+        </MembershipCard>
+
+        <GroupActions>
+          <GroupActionPanel>
+            <ActionToggle
+              active={isCreateOpen}
+              onClick={() => setIsCreateOpen((open) => !open)}
+            >
+              {isCreateOpen ? "▾" : "▸"} Create Group
+            </ActionToggle>
+
+            {isCreateOpen && (
+              <GroupCard>
+                <GroupJoinTitle>Create Group</GroupJoinTitle>
+                <GroupJoinRow>
+                  <GroupInput
+                    placeholder="Group name"
+                    value={groupName}
+                    onChange={(event) => setGroupName(event.target.value)}
+                    maxLength={64}
+                  />
+                  <GroupInput
+                    placeholder="Username"
+                    value={username}
+                    onChange={(event) => setUsername(event.target.value)}
+                    maxLength={32}
+                  />
+                  <JoinButton onClick={createNewGroup} disabled={isCreating}>
+                    {isCreating ? "Creating..." : "Create"}
+                  </JoinButton>
+                </GroupJoinRow>
+                {createMessage && <GroupStatus>{createMessage}</GroupStatus>}
+              </GroupCard>
+            )}
+          </GroupActionPanel>
+
+          <GroupActionPanel>
+            <ActionToggle active={isJoinOpen} onClick={() => setIsJoinOpen((open) => !open)}>
+              {isJoinOpen ? "▾" : "▸"} Join Group
+            </ActionToggle>
+
+            {isJoinOpen && (
+              <GroupCard>
+                <GroupJoinTitle>Join Group</GroupJoinTitle>
+                <GroupJoinRow>
+                  <GroupInput
+                    placeholder="Join token"
+                    value={joinToken}
+                    onChange={(event) => setJoinToken(event.target.value.toUpperCase())}
+                    maxLength={12}
+                  />
+                  <GroupInput
+                    placeholder="Username"
+                    value={username}
+                    onChange={(event) => setUsername(event.target.value)}
+                    maxLength={32}
+                  />
+                  <JoinButton onClick={joinGroup} disabled={isJoining}>
+                    {isJoining ? "Joining..." : "Join"}
+                  </JoinButton>
+                </GroupJoinRow>
+                {joinMessage && <GroupStatus>{joinMessage}</GroupStatus>}
+              </GroupCard>
+            )}
+          </GroupActionPanel>
+        </GroupActions>
+      </GroupHub>
 
       <Footer>
         <GitHubLink
