@@ -1,7 +1,14 @@
+import React from "react";
 import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
 
 import { appName } from "../constants";
+import {
+  createGroup,
+  getStoredGroupMembership,
+  joinGroupByToken,
+  saveGroupMembership,
+} from "../helpers/group";
 
 const getColor = (variant?: "pink" | "purple" | "cyan") => {
   switch (variant) {
@@ -147,6 +154,84 @@ const ModeDescription = styled.span`
   margin-top: 6px;
 `;
 
+const GroupJoinCard = styled.div`
+  width: 100%;
+  max-width: 440px;
+  border: 1px solid var(--cl-gray-4);
+  border-radius: 8px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+`;
+
+const ExpandButton = styled.button`
+  width: 100%;
+  max-width: 440px;
+  border: 1px solid var(--cl-gray-4);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--cl-white);
+  padding: 12px 14px;
+  font-family: "Roboto Mono", monospace;
+  font-size: 0.88rem;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+
+  &:hover {
+    border-color: var(--cl-cyan-6);
+  }
+`;
+
+const GroupJoinTitle = styled.h3`
+  margin: 0;
+  font-family: "Roboto Mono", monospace;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--cl-white);
+`;
+
+const GroupJoinRow = styled.div`
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+`;
+
+const GroupInput = styled.input`
+  flex: 1;
+  min-width: 180px;
+  background: transparent;
+  border: 1px solid var(--cl-gray-4);
+  color: var(--cl-white);
+  padding: 10px;
+  font-family: "Roboto Mono", monospace;
+  font-size: 0.8rem;
+`;
+
+const JoinButton = styled.button`
+  border: 1px solid var(--cl-cyan-6);
+  color: var(--cl-cyan-6);
+  background: transparent;
+  padding: 10px 14px;
+  font-family: "Roboto Mono", monospace;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+
+  &:hover {
+    background: var(--cl-cyan-6);
+    color: var(--cl-white, #fff);
+  }
+`;
+
+const GroupStatus = styled.p`
+  margin: 0;
+  font-family: "Roboto Mono", monospace;
+  font-size: 0.76rem;
+  color: var(--cl-gray-7);
+`;
+
 const Footer = styled.div`
   margin-top: 8px;
   display: flex;
@@ -180,6 +265,69 @@ const GitHubIcon = styled.svg`
 
 export function LandingPage() {
   const navigate = useNavigate();
+  const initialMembership = React.useMemo(() => getStoredGroupMembership(), []);
+  const [currentMembership, setCurrentMembership] = React.useState(initialMembership);
+
+  const [groupName, setGroupName] = React.useState("");
+  const [joinToken, setJoinToken] = React.useState(
+    initialMembership?.joinToken ?? ""
+  );
+  const [username, setUsername] = React.useState(
+    initialMembership?.username ?? localStorage.getItem("groupUsername") ?? ""
+  );
+  const [joinMessage, setJoinMessage] = React.useState("");
+  const [createMessage, setCreateMessage] = React.useState("");
+  const [isJoining, setIsJoining] = React.useState(false);
+  const [isCreating, setIsCreating] = React.useState(false);
+  const [isCreateOpen, setIsCreateOpen] = React.useState(false);
+  const [isJoinOpen, setIsJoinOpen] = React.useState(false);
+
+  const createNewGroup = React.useCallback(async () => {
+    if (!groupName.trim() || !username.trim()) {
+      setCreateMessage("Enter group name and username.");
+      return;
+    }
+
+    setIsCreating(true);
+    try {
+      const membership = await createGroup(groupName, username);
+      saveGroupMembership(membership);
+      setCurrentMembership(membership);
+      localStorage.setItem("groupUsername", membership.username);
+      setJoinToken(membership.joinToken ?? "");
+      setCreateMessage(
+        `Created ${membership.groupName}. Join token: ${membership.joinToken}`
+      );
+    } catch (error) {
+      setCreateMessage(
+        error instanceof Error ? error.message : "Unable to create group."
+      );
+    } finally {
+      setIsCreating(false);
+    }
+  }, [groupName, username]);
+
+  const joinGroup = React.useCallback(async () => {
+    if (!joinToken.trim() || !username.trim()) {
+      setJoinMessage("Enter both token and username.");
+      return;
+    }
+
+    setIsJoining(true);
+    try {
+      const membership = await joinGroupByToken(joinToken, username);
+      saveGroupMembership(membership);
+      setCurrentMembership(membership);
+      localStorage.setItem("groupUsername", membership.username);
+      setJoinMessage(`Joined ${membership.groupName} as ${membership.username}`);
+    } catch (error) {
+      setJoinMessage(
+        error instanceof Error ? error.message : "Unable to join group."
+      );
+    } finally {
+      setIsJoining(false);
+    }
+  }, [joinToken, username]);
 
   return (
     <Container>
@@ -215,6 +363,65 @@ export function LandingPage() {
           </ButtonGroup>
         </div>
       </ModeGroups>
+
+      <ExpandButton onClick={() => setIsCreateOpen((open) => !open)}>
+        {isCreateOpen ? "▾" : "▸"} Create Group
+      </ExpandButton>
+      {isCreateOpen && (
+        <GroupJoinCard>
+          <GroupJoinTitle>Create Group</GroupJoinTitle>
+          <GroupJoinRow>
+            <GroupInput
+              placeholder="Group name"
+              value={groupName}
+              onChange={(event) => setGroupName(event.target.value)}
+              maxLength={64}
+            />
+            <GroupInput
+              placeholder="Username"
+              value={username}
+              onChange={(event) => setUsername(event.target.value)}
+              maxLength={32}
+            />
+            <JoinButton onClick={createNewGroup} disabled={isCreating}>
+              {isCreating ? "Creating..." : "Create"}
+            </JoinButton>
+          </GroupJoinRow>
+          {createMessage && <GroupStatus>{createMessage}</GroupStatus>}
+        </GroupJoinCard>
+      )}
+
+      <ExpandButton onClick={() => setIsJoinOpen((open) => !open)}>
+        {isJoinOpen ? "▾" : "▸"} Join Group
+      </ExpandButton>
+      {isJoinOpen && (
+        <GroupJoinCard>
+          <GroupJoinTitle>Join a Group</GroupJoinTitle>
+          <GroupJoinRow>
+            <GroupInput
+              placeholder="Join token"
+              value={joinToken}
+              onChange={(event) => setJoinToken(event.target.value.toUpperCase())}
+              maxLength={12}
+            />
+            <GroupInput
+              placeholder="Username"
+              value={username}
+              onChange={(event) => setUsername(event.target.value)}
+              maxLength={32}
+            />
+            <JoinButton onClick={joinGroup} disabled={isJoining}>
+              {isJoining ? "Joining..." : "Join"}
+            </JoinButton>
+          </GroupJoinRow>
+          {currentMembership && (
+            <GroupStatus>
+              Current group: {currentMembership.groupName} ({currentMembership.username})
+            </GroupStatus>
+          )}
+          {joinMessage && <GroupStatus>{joinMessage}</GroupStatus>}
+        </GroupJoinCard>
+      )}
 
       <Footer>
         <GitHubLink

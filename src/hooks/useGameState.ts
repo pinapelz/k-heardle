@@ -6,6 +6,7 @@ import {
   submitDailyGuess,
   submitDailyMVGuess,
 } from "../helpers/fetchSolution";
+import { getStoredGroupMembership } from "../helpers/group";
 
 export type GameMode = "daily" | "dailyMV";
 
@@ -231,6 +232,8 @@ export function useGameState({
 
       setIsSubmitting(true);
       try {
+        const membership = getStoredGroupMembership();
+
         const res = await submitGuessFn({
           sessionToken,
           sig: stats.sig,
@@ -241,6 +244,8 @@ export function useGameState({
             guesses: guesses.filter(isAnsweredGuess),
           },
           guess: null,
+          groupId: membership?.groupId,
+          username: membership?.username,
         });
 
         applyServerState(res.state, res.sig);
@@ -282,6 +287,8 @@ export function useGameState({
 
       setIsSubmitting(true);
       try {
+        const membership = getStoredGroupMembership();
+
         const res = await submitGuessFn({
           sessionToken,
           sig: stats.sig,
@@ -295,6 +302,8 @@ export function useGameState({
             artist: selectedSong.artist,
             name: selectedSong.name,
           },
+          groupId: membership?.groupId,
+          username: membership?.username,
         });
 
         applyServerState(res.state, res.sig);

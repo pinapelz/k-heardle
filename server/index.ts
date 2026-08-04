@@ -3,7 +3,8 @@ import cors from "cors";
 import dotenv from "dotenv";
 import { dailyRouter } from "./daily";
 import { selectRouter } from "./select";
-import "./db/schema"
+import { groupRouter } from "./group";
+import "./db/schema";
 
 dotenv.config();
 
@@ -15,6 +16,7 @@ const SERVER_PORT = process.env.SERVER_PORT || 3001;
 
 app.use(dailyRouter);
 app.use(selectRouter);
+app.use(groupRouter);
 
 const enableDailyMusicVideo = process.env.ENABLE_DAILY_MUSIC_VIDEO === "true";
 

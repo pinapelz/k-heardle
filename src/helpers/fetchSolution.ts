@@ -55,6 +55,8 @@ interface SubmitDailyGuessRequest {
   state: DailyGameState;
   sig: string;
   guess?: SongGuessPayload | null;
+  username?: string;
+  groupId?: string;
 }
 
 interface SubmitDailyGuessResponse {

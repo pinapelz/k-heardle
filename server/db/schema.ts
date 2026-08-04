@@ -7,6 +7,8 @@ CREATE TABLE IF NOT EXISTS groups (
     join_code TEXT UNIQUE NOT NULL,
     current_streak INTEGER NOT NULL DEFAULT 0,
     last_completed TEXT,
+    mv_current_streak INTEGER NOT NULL DEFAULT 0,
+    mv_last_completed TEXT,
     created_at INTEGER NOT NULL
 );
 

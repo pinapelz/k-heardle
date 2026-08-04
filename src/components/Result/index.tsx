@@ -11,6 +11,11 @@ import { MiniYouTubePlayer } from "../MiniYouTubePlayer";
 import * as Styled from "./index.styled";
 import { theme } from "../../constants";
 import GuessDistributionChart from '../Chart';
+import {
+  getGroupDailyStatus,
+  getStoredGroupMembership,
+  GroupDailyStatus,
+} from "../../helpers/group";
 
 interface SolutionProps {
   didGuess: boolean;
@@ -106,6 +111,7 @@ export function Result({
   onPlayAgain,
 }: Props) {
   const [timeLeftStr, setTimeLeftStr] = useState<string>('');
+  const [groupStatus, setGroupStatus] = React.useState<GroupDailyStatus | null>(null);
 
   React.useEffect(() => {
     const updateTimeLeft = () => {
@@ -133,6 +139,37 @@ export function Result({
   const isUnlimited = mode === "unlimited";
   const chartMode = mode === "dailyMV" ? "dailyMV" : "daily";
 
+  React.useEffect(() => {
+    if (isUnlimited) {
+      setGroupStatus(null);
+      return;
+    }
+
+    const membership = getStoredGroupMembership();
+    if (!membership) {
+      setGroupStatus(null);
+      return;
+    }
+
+    let cancelled = false;
+
+    getGroupDailyStatus(membership.groupId, sessionDate, chartMode)
+      .then((status) => {
+        if (!cancelled) {
+          setGroupStatus(status);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setGroupStatus(null);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isUnlimited, sessionDate, chartMode]);
+
   if (didGuess) {
     const textForTry = ["Perfect!", "Wow!", "Super!", "Congrats!", "Nice!"];
 
@@ -156,6 +193,18 @@ export function Result({
         )}
 
         {!isUnlimited && <ShareButton guesses={guesses} variant="green" />}
+
+        {groupStatus && (
+          <Styled.GroupStatus>
+            <Styled.GroupHeading>{groupStatus.groupName}</Styled.GroupHeading>
+            <Styled.GroupMeta>
+              Group streak: <strong>{groupStatus.currentStreak}</strong>
+            </Styled.GroupMeta>
+            <Styled.GroupMeta>
+              Finished today: {groupStatus.finishedUsers.length > 0 ? groupStatus.finishedUsers.join(", ") : "No one yet"}
+            </Styled.GroupMeta>
+          </Styled.GroupStatus>
+        )}
 
         {isUnlimited && onPlayAgain ? (
           <Button variant="green" onClick={onPlayAgain}>
@@ -190,6 +239,18 @@ export function Result({
       )}
 
       {!isUnlimited && <ShareButton guesses={guesses} variant="red" />}
+
+      {groupStatus && (
+        <Styled.GroupStatus>
+          <Styled.GroupHeading>{groupStatus.groupName}</Styled.GroupHeading>
+          <Styled.GroupMeta>
+            Group streak: <strong>{groupStatus.currentStreak}</strong>
+          </Styled.GroupMeta>
+          <Styled.GroupMeta>
+            Finished today: {groupStatus.finishedUsers.length > 0 ? groupStatus.finishedUsers.join(", ") : "No one yet"}
+          </Styled.GroupMeta>
+        </Styled.GroupStatus>
+      )}
 
       {isUnlimited && onPlayAgain ? (
         <Button variant="red" onClick={onPlayAgain}>

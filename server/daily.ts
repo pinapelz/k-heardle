@@ -13,6 +13,7 @@ import {
   getDailySong,
   getDailyMusicVideo,
 } from "./shared";
+import { recordDailySolve, recordMvSolve } from "./db/groups";
 
 export const dailyRouter = Router();
 
@@ -69,6 +70,8 @@ dailyRouter.post("/guess", guessLimiter, (req, res) => {
     state?: unknown;
     sig?: unknown;
     guess?: unknown;
+    username?: unknown;
+    groupId?: unknown;
   };
 
   if (!verifySessionToken(body.sessionToken, today)) {
@@ -135,6 +138,28 @@ dailyRouter.post("/guess", guessLimiter, (req, res) => {
     guesses: [...state.guesses, nextGuess],
   };
 
+  const hasFinishedRound = nextState.didGuess || nextState.currentTry >= 6;
+
+  if (
+    hasFinishedRound &&
+    typeof body.groupId === "string" &&
+    body.groupId.trim().length > 0 &&
+    typeof body.username === "string" &&
+    body.username.trim().length > 0
+  ) {
+    try {
+      recordDailySolve(
+        body.groupId,
+        body.username,
+        today,
+        nextState.currentTry,
+        nextState.didGuess
+      );
+    } catch (error) {
+      console.error("Failed to record group daily solve", error);
+    }
+  }
+
   res.json({
     state: nextState,
     sig: signState(nextState),
@@ -149,6 +174,8 @@ dailyRouter.post("/guessMV", guessLimiter, (req, res) => {
     state?: unknown;
     sig?: unknown;
     guess?: unknown;
+    username?: unknown;
+    groupId?: unknown;
   };
 
   if (!verifySessionToken(body.sessionToken, today)) {
@@ -214,6 +241,28 @@ dailyRouter.post("/guessMV", guessLimiter, (req, res) => {
     didGuess: state.didGuess || nextGuess.state === "Correct",
     guesses: [...state.guesses, nextGuess],
   };
+
+  const hasFinishedRound = nextState.didGuess || nextState.currentTry >= 6;
+
+  if (
+    hasFinishedRound &&
+    typeof body.groupId === "string" &&
+    body.groupId.trim().length > 0 &&
+    typeof body.username === "string" &&
+    body.username.trim().length > 0
+  ) {
+    try {
+      recordMvSolve(
+        body.groupId,
+        body.username,
+        today,
+        nextState.currentTry,
+        nextState.didGuess
+      );
+    } catch (error) {
+      console.error("Failed to record group MV solve", error);
+    }
+  }
 
   res.json({
     state: nextState,
