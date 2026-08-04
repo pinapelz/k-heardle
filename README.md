@@ -23,6 +23,12 @@ The state of the daily game is kept locally and a signature is generated to prev
 - Needs to be explictly enabled (set `ENABLE_DAILY_MUSIC_VIDEO` environment variable to `true`)
   - This is relayed in the `/info` endpoint, daily generation script checks this to see if it should generate content for this game mode
 
+# Groups
+- Groups allow users to band together and track how many consecutive days they can guess the correct answer
+- Users can create/join a group on the home page, each user may only join 1 group
+- The streak counter only increments/stays alive if someone guesses the answer correctly
+- Internally, this is tracked in a SQLite DB
+
 # Local Development
 ```bash
 pnpm i

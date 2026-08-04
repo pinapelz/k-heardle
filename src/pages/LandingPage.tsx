@@ -334,7 +334,7 @@ export function LandingPage() {
       <Hero>
         <Title>{appName}</Title>
         <HeroImage>
-          <img src="https://yena.pinapelz.com/kheardle/stress.png" alt="NMIXX Haewon Stress PNG" />
+          <img src="https://yena.pinapelz.com/kheardle/nmixx.webp" alt="NMIXX" />
         </HeroImage>
         <Subtitle>a kpop music guessing game</Subtitle>
       </Hero>
