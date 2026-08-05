@@ -49,6 +49,11 @@ export function saveGroupMembership(membership: GroupMembership) {
   localStorage.setItem(GROUP_MEMBERSHIP_STORAGE_KEY, JSON.stringify(membership));
 }
 
+export function removeGroupMembership() {
+  localStorage.removeItem(GROUP_MEMBERSHIP_STORAGE_KEY);
+  window.location.reload();
+}
+
 export async function createGroup(
   name: string,
   username: string
