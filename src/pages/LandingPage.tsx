@@ -55,6 +55,11 @@ export function LandingPage() {
     }
   }, [groupName, username]);
 
+  const showSolveHistory = React.useCallback(() => {
+    if (!currentMembership) return;
+    navigate(`/stats/${encodeURIComponent(currentMembership.groupName)}`);
+  }, [currentMembership, navigate]);
+
   const joinGroup = React.useCallback(async () => {
     if (!joinToken.trim() || !username.trim()) {
       setJoinMessage("Enter both token and username.");
@@ -150,6 +155,14 @@ export function LandingPage() {
               <Styles.GroupActions>
                 <Styles.GroupActionPanel>
                   <Styles.LeaveGroupButton onClick={removeGroupMembership}>Leave Group</Styles.LeaveGroupButton>
+                </Styles.GroupActionPanel>
+                <Styles.GroupActionPanel>
+                  <Styles.JoinButton
+                    onClick={showSolveHistory}
+                    disabled={!currentMembership}
+                  >
+                    View Solve History
+                  </Styles.JoinButton>
                 </Styles.GroupActionPanel>
               </Styles.GroupActions>
             </>

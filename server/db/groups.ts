@@ -194,6 +194,33 @@ export function createGroup(name: string) {
   };
 }
 
+export function getGroupByName(
+  name: string
+): { id: string; name: string; joinCode: string } | null {
+  const normalizedName = name.trim();
+  if (!normalizedName) return null;
+
+  const group = db
+    .prepare(
+      `
+      SELECT id, name, join_code
+      FROM groups
+      WHERE name = ?
+    `
+    )
+    .get(normalizedName) as
+    | { id: string; name: string; join_code: string }
+    | undefined;
+
+  if (!group) return null;
+
+  return {
+    id: group.id,
+    name: group.name,
+    joinCode: group.join_code,
+  };
+}
+
 export function getGroupByJoinCode(
   joinCode: string
 ): { id: string; name: string; joinCode: string } | null {
@@ -347,4 +374,23 @@ export function getGroupDailyStatus(
     currentStreak: streak.currentStreak,
     finishedUsers: finishedRows.map((row) => row.username),
   };
+}
+
+export function getGroupSolveHistory(
+  groupId: string,
+  dateString: string,
+  mode: GroupMode = "daily"
+): string[] {
+  const tableName = getSolveTableName(mode);
+  const rows = db
+    .prepare(
+      `
+        SELECT DISTINCT date
+        FROM ${tableName}
+        WHERE group_id = ? AND solved = 1 AND strftime('%Y-%m', date) = ?
+        ORDER BY date ASC
+      `
+    )
+    .all(groupId, dateString) as Array<{ date: string }>;
+  return rows.map((row) => row.date);
 }

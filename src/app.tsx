@@ -5,6 +5,7 @@ import { LandingPage } from "./pages/LandingPage";
 import { DailyPage } from "./pages/DailyPage";
 import { UnlimitedPage } from "./pages/UnlimitedPage";
 import { MVPage } from "./pages/MVPage";
+import { GroupStatsPage } from "./pages/GroupStatsPage";
 
 function App() {
   return (
@@ -14,6 +15,7 @@ function App() {
         <Route path="/daily" element={<DailyPage />} />
         <Route path="/mv" element={<MVPage />} />
         <Route path="/unlimited" element={<UnlimitedPage />} />
+        <Route path="/stats/:groupName" element={<GroupStatsPage />} />
       </Routes>
     </BrowserRouter>
   );

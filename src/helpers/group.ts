@@ -144,3 +144,42 @@ export async function getGroupDailyStatus(
 
   return (await response.json()) as GroupDailyStatus;
 }
+
+export interface GroupSolveHistory {
+  groupId: string;
+  month: string;
+  mode: "daily" | "mv";
+  solvedDates: string[];
+}
+
+export async function getGroupSolveHistory(
+  groupId: string,
+  month: string,
+  mode: GroupStatusMode = "daily"
+): Promise<GroupSolveHistory> {
+  const response = await fetch(
+    `${API_URL}/group-statistics?groupId=${encodeURIComponent(groupId)}&date=${encodeURIComponent(month)}&mode=${encodeURIComponent(mode)}`
+  );
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch solve history: ${response.statusText}`);
+  }
+
+  return (await response.json()) as GroupSolveHistory;
+}
+
+export async function getGroupSolveHistoryByName(
+  name: string,
+  month: string,
+  mode: GroupStatusMode = "daily"
+): Promise<GroupSolveHistory> {
+  const response = await fetch(
+    `${API_URL}/group-statistics?name=${encodeURIComponent(name)}&date=${encodeURIComponent(month)}&mode=${encodeURIComponent(mode)}`
+  );
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch solve history: ${response.statusText}`);
+  }
+
+  return (await response.json()) as GroupSolveHistory;
+}

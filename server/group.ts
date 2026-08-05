@@ -3,6 +3,8 @@ import {
   createGroup,
   getGroupDailyStatus,
   getGroupByJoinCode,
+  getGroupByName,
+  getGroupSolveHistory,
   recordGroupJoin,
 } from "./db/groups";
 import { getUtcDate } from "./shared";
@@ -96,4 +98,41 @@ groupRouter.get("/group-status", (req, res) => {
   }
 
   res.json(status);
+});
+
+
+groupRouter.get("/group-statistics", (req, res) => {
+  const groupId = req.query.groupId;
+  const name = req.query.name;
+  const dateString = req.query.date;
+  const mode = req.query.mode;
+  if (typeof dateString !== "string" || dateString.trim().length === 0) {
+    res.status(400).json({ error: "date is required." });
+    return;
+  }
+
+  let resolvedGroupId: string | null = null;
+  if (typeof groupId === "string" && groupId.trim().length > 0) {
+    resolvedGroupId = groupId.trim();
+  } else if (typeof name === "string" && name.trim().length > 0) {
+    const group = getGroupByName(name);
+    if (!group) {
+      res.status(404).json({ error: "Group not found." });
+      return;
+    }
+    resolvedGroupId = group.id;
+  } else {
+    res.status(400).json({ error: "groupId or name is required." });
+    return;
+  }
+
+  const normalizedMode = mode === "mv" ? "mv" : "daily";
+  const solvedDates = getGroupSolveHistory(resolvedGroupId, dateString, normalizedMode);
+
+  res.json({
+    groupId: resolvedGroupId,
+    month: dateString,
+    mode: normalizedMode,
+    solvedDates,
+  });
 });
