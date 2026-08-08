@@ -89,7 +89,7 @@ groupRouter.get("/group-status", (req, res) => {
   }
 
   const targetDate = typeof date === "string" && date.trim() ? date : getUtcDate();
-  const normalizedMode = mode === "mv" ? "mv" : "daily";
+  const normalizedMode = mode === "mv" || mode === "dailyMV" ? "mv" : "daily";
   const status = getGroupDailyStatus(groupId, targetDate, normalizedMode);
 
   if (!status) {
@@ -126,7 +126,7 @@ groupRouter.get("/group-statistics", (req, res) => {
     return;
   }
 
-  const normalizedMode = mode === "mv" ? "mv" : "daily";
+  const normalizedMode = mode === "mv" || mode === "dailyMV" ? "mv" : "daily";
   const solvedDates = getGroupSolveHistory(resolvedGroupId, dateString, normalizedMode);
 
   res.json({
