@@ -5,6 +5,7 @@ import HeatMap, { type HeatMapValue } from "@uiw/react-heat-map";
 export interface HeatmapProps {
   value: HeatMapValue[];
   startDate?: Date;
+  endDate?: Date;
 }
 
 const PANEL_COLORS = [
@@ -29,7 +30,7 @@ const formatTooltip = (dateStr: string, count: number) => {
 };
 
 const Heatmap = React.forwardRef<HTMLDivElement, HeatmapProps>(
-  ({ value, startDate }, ref) => {
+  ({ value, startDate, endDate }, ref) => {
     const resolvedStartDate =
       startDate ?? (value.length > 0 ? new Date(value[0].date) : new Date());
 
@@ -54,6 +55,7 @@ const Heatmap = React.forwardRef<HTMLDivElement, HeatmapProps>(
             style={{ color: '#fffffff' }}
             value={value}
             startDate={resolvedStartDate}
+            endDate={endDate}
             panelColors={PANEL_COLORS}
             rectSize={20}
             legendCellSize={0}

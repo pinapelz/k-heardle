@@ -30,6 +30,23 @@ function monthEndDate(month: string): Date | undefined {
   return new Date(Date.UTC(year, monthIndex + 1, 0));
 }
 
+// Range that includes the selected month with padding (3 months on each side)
+function monthRangeWithPadding(month: string): {
+  startDate?: Date;
+  endDate?: Date;
+} {
+  const start = monthStartDate(month);
+  const end = monthEndDate(month);
+  if (!start || !end) return {};
+  const startDate = new Date(
+    Date.UTC(start.getUTCFullYear(), start.getUTCMonth() - 3, 1)
+  );
+  const endDate = new Date(
+    Date.UTC(end.getUTCFullYear(), end.getUTCMonth() + 4, 0)
+  );
+  return { startDate, endDate };
+}
+
 function formatMonthLabel(month: string): string {
   const match = /^(\d{4})-(\d{2})$/.exec(month);
   if (!match) return month;
@@ -104,8 +121,7 @@ export function GroupStatsPage() {
     [solvedDates]
   );
 
-  const startDate = monthStartDate(month);
-  const endDate = monthEndDate(month);
+  const { startDate, endDate } = monthRangeWithPadding(month);
 
   return (
     <Styles.Container>
