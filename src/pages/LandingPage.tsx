@@ -60,6 +60,12 @@ export function LandingPage() {
     navigate(`/stats/${encodeURIComponent(currentMembership.groupName)}`);
   }, [currentMembership, navigate]);
 
+  const copyInviteInfo = () => {
+    window.navigator.clipboard.writeText(`Join ${currentMembership?.groupName} on ${appName} using ${joinToken} - ${window.location.href}`);
+    alert("Invite Info Copied")
+
+  };
+
   const joinGroup = React.useCallback(async () => {
     if (!joinToken.trim() || !username.trim()) {
       setJoinMessage("Enter both token and username.");
@@ -161,9 +167,16 @@ export function LandingPage() {
                     onClick={showSolveHistory}
                     disabled={!currentMembership}
                   >
-                    View Solve History
+                    History
                   </Styles.JoinButton>
+
                 </Styles.GroupActionPanel>
+                <Styles.JoinButton
+                  onClick={copyInviteInfo}
+                  disabled={!currentMembership}
+                >
+                  Copy Invite Info
+                </Styles.JoinButton>
               </Styles.GroupActions>
             </>
           ) : (
