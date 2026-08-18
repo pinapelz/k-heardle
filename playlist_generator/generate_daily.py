@@ -17,7 +17,7 @@ ACCESS_KEY = os.getenv("R2_ACCESS_KEY")
 SECRET_KEY = os.getenv("R2_SECRET_KEY")
 BUCKET = os.getenv("R2_BUCKET")
 API_URL = os.getenv("API_URL")
-MAX_RETRIES = int(os.getenv("MAX_RETRIES", "10"))
+MAX_RETRIES = int(os.getenv("MAX_RETRIES", "5"))
 HEARDLE_SALT = (
     os.getenv("VITE_HEARDLE_SALT")
     or os.getenv("OBFUSCATION_KEY")
@@ -92,7 +92,7 @@ def fetch_daily_mv() -> dict:
 
 def download_random_segment_mp3(youtube_id: str, output_file="today.mp3") -> str:
     url = f"https://www.youtube.com/watch?v={youtube_id}"
-    with yt_dlp.YoutubeDL({"quiet": True}) as ydl:
+    with yt_dlp.YoutubeDL({"quiet": True, "remote_components": ["ejs:github"]}) as ydl:
         info = ydl.extract_info(url, download=False)
         duration = info.get("duration", 60)
     start = 0 if duration <= 17 else random.randint(0, duration - 17)
@@ -112,6 +112,7 @@ def download_random_segment_mp3(youtube_id: str, output_file="today.mp3") -> str
         "force_keyframes_at_cuts": True,
         "overwrites": True,
         "nopart": True,
+        "remote_components": ["ejs:github"],
     }
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         ydl.download([url])
@@ -175,20 +176,30 @@ def main():
             print(f"Daily track for {target_date} already generated according to save.json. Skipping.")
         else:
             attempt = 0
-            while True:
-                daily_data = fetch_daily()
-                if daily_data["date"] == target_date:
-                    break
+            daily_data = None
+            while attempt < MAX_RETRIES:
                 attempt += 1
-                print(f"Server is returning date {daily_data['date']}, waiting for {target_date}... (attempt {attempt})")
-                time.sleep(5)
+                try:
+                    daily_data = fetch_daily()
+                    if daily_data["date"] == target_date:
+                        break
+                    print(f"Server is returning date {daily_data['date']}, waiting for {target_date}... (attempt {attempt})")
+                except Exception as e:
+                    print(f"Error fetching daily track: {e} (attempt {attempt})")
+                if attempt < MAX_RETRIES:
+                    time.sleep(5)
+
+            if not daily_data or daily_data.get("date") != target_date:
+                print(f"Failed to fetch daily track for {target_date} after {MAX_RETRIES} attempts")
+                send_notification(f"K-HEARDLE: Failed to fetch daily track for {target_date}")
+                return
 
             data = decode_data(daily_data["data"], daily_data["date"])
             youtube_id = data["youtubeId"]
             try:
                 clip_path = download_random_segment_mp3(youtube_id)
-            except:
-                print(f"Failed to download clip for {youtube_id}")
+            except Exception as e:
+                print(f"Failed to download clip for {youtube_id}: {e}")
                 send_notification(f"K-HEARDLE: Failed to download clip for {youtube_id}")
                 return
             date = daily_data["date"]
@@ -214,13 +225,23 @@ def main():
             print(f"Daily MV frames for {target_date} already generated according to save_mv.json. Skipping.")
         else:
             attempt = 0
-            while True:
-                mv_data = fetch_daily_mv()
-                if mv_data["date"] == target_date:
-                    break
+            mv_data = None
+            while attempt < MAX_RETRIES:
                 attempt += 1
-                print(f"Server is returning MV date {mv_data['date']}, waiting for {target_date}... (attempt {attempt})")
-                time.sleep(5)
+                try:
+                    mv_data = fetch_daily_mv()
+                    if mv_data["date"] == target_date:
+                        break
+                    print(f"Server is returning MV date {mv_data['date']}, waiting for {target_date}... (attempt {attempt})")
+                except Exception as e:
+                    print(f"Error fetching daily MV: {e} (attempt {attempt})")
+                if attempt < MAX_RETRIES:
+                    time.sleep(5)
+
+            if not mv_data or mv_data.get("date") != target_date:
+                print(f"Failed to fetch daily MV for {target_date} after {MAX_RETRIES} attempts")
+                send_notification(f"K-HEARDLE: Failed to fetch daily MV for {target_date}")
+                return
 
             mv_decoded = decode_data(mv_data["data"], mv_data["date"])
             mv_youtube_id = mv_decoded["youtubeId"]
@@ -233,8 +254,8 @@ def main():
                     mv_output_dir,
                     count=3,
                 )
-            except Exception:
-                print(f"Failed to generate MV frames for {mv_youtube_id}")
+            except Exception as e:
+                print(f"Failed to generate MV frames for {mv_youtube_id}: {e}")
                 send_notification(f"K-HEARDLE: Failed to generate MV frames for {mv_youtube_id}")
                 return
 
