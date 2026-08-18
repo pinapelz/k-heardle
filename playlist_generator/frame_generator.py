@@ -6,7 +6,7 @@ import os
 
 
 def get_video_info(url):
-    ydl_opts = {"quiet": True, "remote_components": ["ejs:github"]}
+    ydl_opts = {"quiet": True, "remote_components": ["ejs:github"], "source_address": "0.0.0.0", "cookiefile": "cookies.txt"}
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         return ydl.extract_info(url, download=False)
 

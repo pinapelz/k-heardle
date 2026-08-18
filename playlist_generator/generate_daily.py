@@ -92,7 +92,7 @@ def fetch_daily_mv() -> dict:
 
 def download_random_segment_mp3(youtube_id: str, output_file="today.mp3") -> str:
     url = f"https://www.youtube.com/watch?v={youtube_id}"
-    with yt_dlp.YoutubeDL({"quiet": True, "remote_components": ["ejs:github"]}) as ydl:
+    with yt_dlp.YoutubeDL({"source_address": "0.0.0.0","quiet": True, "remote_components": ["ejs:github"]}) as ydl:
         info = ydl.extract_info(url, download=False)
         duration = info.get("duration", 60)
     start = 0 if duration <= 17 else random.randint(0, duration - 17)
@@ -113,10 +113,11 @@ def download_random_segment_mp3(youtube_id: str, output_file="today.mp3") -> str
         "overwrites": True,
         "nopart": True,
         "remote_components": ["ejs:github"],
+        "source_address": "0.0.0.0",
+        "cookiefile": "cookies.txt",
     }
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         ydl.download([url])
-
     return output_file
 
 def upload_to_r2(file_path: str, object_key: str):
