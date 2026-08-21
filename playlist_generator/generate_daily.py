@@ -24,6 +24,7 @@ HEARDLE_SALT = (
 )
 NTFY_URL = os.getenv("NTFY_URL")
 NTFY_TOKEN = os.getenv("NTFY_TOKEN")
+COOKIES_PATH = os.getenv("COOKIES_PATH", "cookies.txt")
 
 def fetch_instance_info() -> dict:
     if not API_URL:
@@ -114,7 +115,7 @@ def download_random_segment_mp3(youtube_id: str, output_file="today.mp3") -> str
         "nopart": True,
         "remote_components": ["ejs:github"],
         "source_address": "0.0.0.0",
-        "cookiefile": "cookies.txt",
+        "cookiefile": COOKIES_PATH,
     }
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         ydl.download([url])
@@ -254,6 +255,7 @@ def main():
                     f"https://www.youtube.com/watch?v={mv_youtube_id}",
                     mv_output_dir,
                     count=3,
+                    cookies_path=COOKIES_PATH
                 )
             except Exception as e:
                 print(f"Failed to generate MV frames for {mv_youtube_id}: {e}")

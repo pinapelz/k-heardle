@@ -5,8 +5,8 @@ import cv2
 import os
 
 
-def get_video_info(url):
-    ydl_opts = {"quiet": True, "remote_components": ["ejs:github"], "source_address": "0.0.0.0", "cookiefile": "cookies.txt"}
+def get_video_info(url, cookies_path):
+    ydl_opts = {"quiet": True, "remote_components": ["ejs:github"], "source_address": "0.0.0.0", "cookiefile": cookies_path}
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         return ydl.extract_info(url, download=False)
 
@@ -34,11 +34,11 @@ def is_low_energy(img_path, size=64, threshold=500):
     return gray.var() < threshold
 
 
-def download_random_frame(url, name_prefix="frame", selected_timestamps=None, max_tries=10):
+def download_random_frame(url, name_prefix="frame", selected_timestamps=None, max_tries=10, cookies_path="cookies.txt"):
     if selected_timestamps is None:
         selected_timestamps = []
 
-    info = get_video_info(url)
+    info = get_video_info(url, cookies_path)
     duration = info.get("duration")
     if not duration:
         raise RuntimeError("No duration found")
@@ -82,7 +82,7 @@ def download_random_frame(url, name_prefix="frame", selected_timestamps=None, ma
     raise RuntimeError(err_msg)
 
 
-def generate_daily_random_frames(url, output_dir, count=3):
+def generate_daily_random_frames(url, output_dir, count=3, cookies_path="cookies.txt"):
     selected_timestamps = []
     os.makedirs(output_dir, exist_ok=True)
     for i in range(count):
@@ -90,7 +90,8 @@ def generate_daily_random_frames(url, output_dir, count=3):
             ts = download_random_frame(
                 url,
                 f"{output_dir}/frame",
-                selected_timestamps
+                selected_timestamps,
+                cookies_path=cookies_path
             )
             selected_timestamps.append(ts)
             print(f"Downloaded frame {i} at {ts:.2f}s")
