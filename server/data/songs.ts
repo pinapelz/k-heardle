@@ -32,7 +32,6 @@ export const songs = [
 { artist: "HEART OF WOMAN", name: "Told U So", youtubeId: "WLUqnhYUImU" },
 { artist: "HEART OF WOMAN", name: "TEA", youtubeId: "f1VMEsmcjBE" },
 { artist: "HEART OF WOMAN", name: "My Vision", youtubeId: "IvGwf3FmtZI" },
-{ artist: "HEART OF WOMAN", name: "Skit.exe", youtubeId: "v1I6zOka3tc" },
 { artist: "HEART OF WOMAN", name: "Lost in Proof", youtubeId: "b9YFKUQ4wTY" },
 { artist: "HEART OF WOMAN", name: "($.$)", youtubeId: "lZGMa6zs8SA" },
 { artist: "HEART OF WOMAN", name: "Close To Me", youtubeId: "-jMyjKxchOc" },
