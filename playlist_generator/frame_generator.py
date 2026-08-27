@@ -1,5 +1,4 @@
 import random
-import subprocess
 import yt_dlp
 import cv2
 import os
@@ -11,18 +10,20 @@ def get_video_info(url, cookies_path):
         return ydl.extract_info(url, download=False)
 
 
-def pick_best_video_url(info):
-    formats = [
-        f for f in info.get("formats", [])
-        if f.get("url") and f.get("vcodec") != "none"
-    ]
-    if not formats:
-        raise RuntimeError("No suitable video formats found")
-    formats.sort(
-        key=lambda f: (f.get("height") or 0, f.get("tbr") or 0),
-        reverse=True
-    )
-    return formats[0]["url"]
+def download_full_video(url, output_path_template, cookies_path="cookies.txt"):
+    ydl_opts = {
+        "format": "bestvideo[vcodec^=avc][height<=1080]/bestvideo[vcodec^=h264][height<=1080]/best[vcodec^=avc][height<=1080]/best[vcodec^=h264][height<=1080]/bestvideo[vcodec^=avc]/bestvideo[vcodec^=h264]/best[vcodec^=avc]/best[vcodec^=h264]",
+        "outtmpl": output_path_template,
+        "quiet": True,
+        "force_ipv4": True,
+        "overwrites": True,
+        "nopart": True,
+        "remote_components": ["ejs:github"],
+        "source_address": "0.0.0.0",
+        "cookiefile": cookies_path,
+    }
+    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+        return ydl.extract_info(url, download=True)
 
 
 def is_low_energy(img_path, size=64, threshold=500):
@@ -34,68 +35,78 @@ def is_low_energy(img_path, size=64, threshold=500):
     return gray.var() < threshold
 
 
-def download_random_frame(url, name_prefix="frame", selected_timestamps=None, max_tries=10, cookies_path="cookies.txt"):
-    if selected_timestamps is None:
-        selected_timestamps = []
-
-    info = get_video_info(url, cookies_path)
-    duration = info.get("duration")
-    if not duration:
-        raise RuntimeError("No duration found")
-
-    video_url = pick_best_video_url(info)
-
-    for attempt in range(1, max_tries + 1):
-        t = random.uniform(0, duration)
-        while any(abs(t - ts) < 1 for ts in selected_timestamps):
-            t = random.uniform(0, duration)
-        filename = f"{name_prefix}-{t:.2f}.jpg"
-
-        cmd = [
-            "ffmpeg",
-            "-4",
-            "-ss", str(t),
-            "-i", video_url,
-            "-frames:v", "1",
-            "-q:v", "2",
-            "-y",
-            filename,
-        ]
-        result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-        if result.returncode != 0:
-            print(f"ffmpeg failed at {t:.2f}s (attempt {attempt}/{max_tries}): {result.stderr.strip()}")
-            continue
-        if not os.path.exists(filename):
-            print(f"Frame file {filename} not found after ffmpeg execution (attempt {attempt}/{max_tries})")
-            continue
-        try:
-            if is_low_energy(filename):
-                os.remove(filename)
-                print(f"Frame at {t:.2f}s discarded due to low energy/variance (attempt {attempt}/{max_tries})")
-                continue
-        except Exception as e:
-            print(f"Error checking energy for frame {filename}: {e}")
-            pass
-        return t
-
-    err_msg = f"Failed to generate a valid frame for {url} after {max_tries} retries"
-    print(err_msg)
-    raise RuntimeError(err_msg)
-
-
-def generate_daily_random_frames(url, output_dir, count=3, cookies_path="cookies.txt"):
+def generate_daily_random_frames(url, output_dir, count=3, max_tries=20, cookies_path="cookies.txt"):
     selected_timestamps = []
     os.makedirs(output_dir, exist_ok=True)
-    for i in range(count):
-        try:
-            ts = download_random_frame(
-                url,
-                f"{output_dir}/frame",
-                selected_timestamps,
-                cookies_path=cookies_path
-            )
-            selected_timestamps.append(ts)
-            print(f"Downloaded frame {i} at {ts:.2f}s")
-        except Exception as e:
-            print(f"Error generating frame {i} from {url}: {e}")
-            raise
+    temp_pattern = os.path.join(output_dir, "temp_source.*")
+    temp_template = os.path.join(output_dir, "temp_source.%(ext)s")
+
+    print(f"Downloading video from {url}...")
+    try:
+        info = download_full_video(url, temp_template, cookies_path=cookies_path)
+    except Exception as e:
+        print(f"Failed to download video: {e}")
+        for f in glob.glob(temp_pattern):
+            try:
+                os.remove(f)
+            except OSError:
+                pass
+        raise
+
+    matching_files = glob.glob(temp_pattern)
+    if not matching_files:
+        raise RuntimeError(f"Downloaded video file not found matching {temp_pattern}")
+
+    video_path = matching_files[0]
+    cap = cv2.VideoCapture(video_path)
+
+    try:
+        if not cap.isOpened():
+            raise RuntimeError(f"Could not open downloaded video {video_path}")
+
+        fps = cap.get(cv2.CAP_PROP_FPS)
+        total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+        if fps and fps > 0 and total_frames > 0:
+            duration = float(total_frames / fps)
+        else:
+            duration = float(info.get("duration") or 0)
+
+        if duration <= 0:
+            raise RuntimeError("Invalid video duration (0s)")
+
+        min_t = min(1.0, duration * 0.05)
+        max_t = max(min_t, duration - min(1.0, duration * 0.05))
+
+        for i in range(count):
+            frame_saved = False
+            for attempt in range(1, max_tries + 1):
+                t = random.uniform(min_t, max_t)
+                if any(abs(t - ts) < 2.0 for ts in selected_timestamps):
+                    continue
+
+                cap.set(cv2.CAP_PROP_POS_MSEC, t * 1000.0)
+                success, frame = cap.read()
+                if not success or frame is None:
+                    continue
+
+                if is_low_energy(frame):
+                    print(f"Frame at {t:.2f}s discarded due to low energy/variance (attempt {attempt}/{max_tries})")
+                    continue
+
+                filename = os.path.join(output_dir, f"frame-{t:.2f}.jpg")
+                cv2.imwrite(filename, frame)
+                selected_timestamps.append(t)
+                print(f"Generated frame {i + 1}/{count} at {t:.2f}s")
+                frame_saved = True
+                break
+
+            if not frame_saved:
+                raise RuntimeError(f"Failed to generate valid frame {i + 1}/{count} after {max_tries} retries")
+
+    finally:
+        cap.release()
+        for f in glob.glob(temp_pattern):
+            try:
+                os.remove(f)
+            except OSError:
+                pass
