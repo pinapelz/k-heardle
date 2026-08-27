@@ -101,6 +101,7 @@ def download_random_segment_mp3(youtube_id: str, output_file="today.mp3") -> str
         "format": "bestaudio/best",
         "outtmpl": output_file.replace(".mp3", ".%(ext)s"),
         "quiet": True,
+        "force_ipv4": True,
         "postprocessors": [{
             "key": "FFmpegExtractAudio",
             "preferredcodec": "mp3",

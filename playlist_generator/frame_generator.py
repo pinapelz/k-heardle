@@ -53,6 +53,7 @@ def download_random_frame(url, name_prefix="frame", selected_timestamps=None, ma
 
         cmd = [
             "ffmpeg",
+            "-4",
             "-ss", str(t),
             "-i", video_url,
             "-frames:v", "1",
