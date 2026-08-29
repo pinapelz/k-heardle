@@ -2,6 +2,7 @@ import random
 import yt_dlp
 import cv2
 import os
+import glob
 
 
 def get_video_info(url, cookies_path):
