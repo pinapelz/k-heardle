@@ -27,11 +27,10 @@ def download_full_video(url, output_path_template, cookies_path="cookies.txt"):
         return ydl.extract_info(url, download=True)
 
 
-def is_low_energy(img_path, size=64, threshold=500):
-    img = cv2.imread(img_path)
-    if img is None:
+def is_low_energy(frame, size=64, threshold=500):
+    if frame is None:
         raise RuntimeError("Could not read image")
-    img = cv2.resize(img, (size, size), interpolation=cv2.INTER_AREA)
+    img = cv2.resize(frame, (size, size), interpolation=cv2.INTER_AREA)
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     return gray.var() < threshold
 

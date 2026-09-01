@@ -261,6 +261,10 @@ def main():
             except Exception as e:
                 print(f"Failed to generate MV frames for {mv_youtube_id}: {e}")
                 send_notification(f"K-HEARDLE: Failed to generate MV frames for {mv_youtube_id}")
+                for fname in os.listdir(mv_output_dir):
+                    delete_file(os.path.join(mv_output_dir, fname))
+                if os.path.exists(mv_output_dir):
+                    os.rmdir(mv_output_dir)
                 return
 
             mv_frame_files = sorted(
@@ -270,6 +274,10 @@ def main():
             if len(mv_frame_files) < 3:
                 print(f"Only generated {len(mv_frame_files)} MV frames for {mv_youtube_id}")
                 send_notification(f"K-HEARDLE: Only generated {len(mv_frame_files)} MV frames for {mv_youtube_id}")
+                for fname in mv_frame_files:
+                    delete_file(os.path.join(mv_output_dir, fname))
+                if os.path.exists(mv_output_dir):
+                    os.rmdir(mv_output_dir)
                 return
 
             try:
