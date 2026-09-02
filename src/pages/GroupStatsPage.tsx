@@ -7,56 +7,27 @@ import {
 } from "../helpers/group";
 import * as Styles from "../styles/group-stats-styles";
 
-function currentUtcMonth(date: Date = new Date()): string {
-  return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}`;
-}
 
-function monthStartDate(month: string): Date | undefined {
-  const match = /^(\d{4})-(\d{2})$/.exec(month);
-  if (!match) return undefined;
-  const year = Number(match[1]);
-  const monthIndex = Number(match[2]) - 1;
-  if (!Number.isFinite(year) || !Number.isFinite(monthIndex)) return undefined;
-  return new Date(Date.UTC(year, monthIndex, 1));
-}
-
-function monthEndDate(month: string): Date | undefined {
-  const match = /^(\d{4})-(\d{2})$/.exec(month);
-  if (!match) return undefined;
-  const year = Number(match[1]);
-  const monthIndex = Number(match[2]) - 1;
-  if (!Number.isFinite(year) || !Number.isFinite(monthIndex)) return undefined;
-  // Last day of the month = day 0 of the next month.
-  return new Date(Date.UTC(year, monthIndex + 1, 0));
-}
-
-// Range that includes the selected month with padding (3 months on each side)
-function monthRangeWithPadding(month: string): {
+// Display the complete history without shifting date-only values across time zones.
+function historyDateRange(solvedDates: string[]): {
   startDate?: Date;
   endDate?: Date;
 } {
-  const start = monthStartDate(month);
-  const end = monthEndDate(month);
-  if (!start || !end) return {};
-  const startDate = new Date(
-    Date.UTC(start.getUTCFullYear(), start.getUTCMonth() - 3, 1)
-  );
+  if (solvedDates.length === 0) return {};
+
+  // Use local date constructors because the heatmap library treats date-only
+  // values as local dates. Using Date.UTC here can shift the first day back
+  // one day in time zones west of UTC.
+  const startDate = new Date(solvedDates[0].replace(/-/g, "/"));
+  const today = new Date();
   const endDate = new Date(
-    Date.UTC(end.getUTCFullYear(), end.getUTCMonth() + 4, 0)
+    today.getFullYear(),
+    today.getMonth(),
+    today.getDate()
   );
   return { startDate, endDate };
 }
 
-function formatMonthLabel(month: string): string {
-  const match = /^(\d{4})-(\d{2})$/.exec(month);
-  if (!match) return month;
-  const date = new Date(Date.UTC(Number(match[1]), Number(match[2]) - 1, 1));
-  return date.toLocaleDateString(undefined, {
-    month: "long",
-    year: "numeric",
-    timeZone: "UTC",
-  });
-}
 
 export function GroupStatsPage() {
   const navigate = useNavigate();
@@ -64,7 +35,6 @@ export function GroupStatsPage() {
   const rawGroupName = params.groupName ?? "";
   const groupName = decodeURIComponent(rawGroupName);
 
-  const [month, setMonth] = React.useState(currentUtcMonth());
   const [mode, setMode] = React.useState<GroupStatusMode>("daily");
   const [isLoading, setIsLoading] = React.useState(false);
   const [error, setError] = React.useState("");
@@ -72,7 +42,7 @@ export function GroupStatsPage() {
   const [hasLoaded, setHasLoaded] = React.useState(false);
 
   const loadHistory = React.useCallback(
-    async (targetMonth: string, targetMode: GroupStatusMode) => {
+    async (targetMode: GroupStatusMode) => {
       if (!groupName.trim()) {
         setError("No group name provided in the URL.");
         return;
@@ -81,11 +51,7 @@ export function GroupStatsPage() {
       setIsLoading(true);
       setError("");
       try {
-        const history = await getGroupSolveHistoryByName(
-          groupName,
-          targetMonth,
-          targetMode
-        );
+        const history = await getGroupSolveHistoryByName(groupName, targetMode);
         setSolvedDates(history.solvedDates);
       } catch (err) {
         setSolvedDates([]);
@@ -102,15 +68,15 @@ export function GroupStatsPage() {
 
   // Initial load.
   React.useEffect(() => {
-    loadHistory(month, mode);
+    loadHistory(mode);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Reload whenever month or mode changes.
+  // Reload whenever the selected mode changes.
   React.useEffect(() => {
     if (!hasLoaded) return;
-    loadHistory(month, mode);
-  }, [month, mode, hasLoaded, loadHistory]);
+    loadHistory(mode);
+  }, [mode, hasLoaded, loadHistory]);
 
   const heatmapValue = React.useMemo(
     () =>
@@ -121,7 +87,7 @@ export function GroupStatsPage() {
     [solvedDates]
   );
 
-  const { startDate, endDate } = monthRangeWithPadding(month);
+  const { startDate, endDate } = historyDateRange(solvedDates);
 
   return (
     <Styles.Container>
@@ -133,15 +99,6 @@ export function GroupStatsPage() {
       </Styles.Header>
 
       <Styles.Controls>
-        <Styles.ControlField>
-          <Styles.ControlLabel>Month</Styles.ControlLabel>
-          <Styles.MonthInput
-            type="month"
-            value={month}
-            onChange={(event) => setMonth(event.target.value)}
-          />
-        </Styles.ControlField>
-
         <Styles.ControlField>
           <Styles.ControlLabel>Mode</Styles.ControlLabel>
           <Styles.ModeSelect
@@ -156,7 +113,7 @@ export function GroupStatsPage() {
         </Styles.ControlField>
 
         <Styles.LoadButton
-          onClick={() => loadHistory(month, mode)}
+          onClick={() => loadHistory(mode)}
           disabled={isLoading}
         >
           {isLoading ? "Loading..." : "Reload"}
@@ -166,7 +123,7 @@ export function GroupStatsPage() {
       {error && <Styles.Error>{error}</Styles.Error>}
 
       {!error && hasLoaded && solvedDates.length === 0 && (
-        <Styles.Status>No solves recorded for {formatMonthLabel(month)}.</Styles.Status>
+        <Styles.Status>No solves recorded for this group.</Styles.Status>
       )}
 
       {heatmapValue.length > 0 && startDate && endDate && (

@@ -154,11 +154,10 @@ export interface GroupSolveHistory {
 
 export async function getGroupSolveHistory(
   groupId: string,
-  month: string,
   mode: GroupStatusMode = "daily"
 ): Promise<GroupSolveHistory> {
   const response = await fetch(
-    `${API_URL}/group-statistics?groupId=${encodeURIComponent(groupId)}&date=${encodeURIComponent(month)}&mode=${encodeURIComponent(mode)}`
+    `${API_URL}/group-statistics?groupId=${encodeURIComponent(groupId)}&mode=${encodeURIComponent(mode)}`
   );
 
   if (!response.ok) {
@@ -170,11 +169,10 @@ export async function getGroupSolveHistory(
 
 export async function getGroupSolveHistoryByName(
   name: string,
-  month: string,
   mode: GroupStatusMode = "daily"
 ): Promise<GroupSolveHistory> {
   const response = await fetch(
-    `${API_URL}/group-statistics?name=${encodeURIComponent(name)}&date=${encodeURIComponent(month)}&mode=${encodeURIComponent(mode)}`
+    `${API_URL}/group-statistics?name=${encodeURIComponent(name)}&mode=${encodeURIComponent(mode)}`
   );
 
   if (!response.ok) {

@@ -378,7 +378,6 @@ export function getGroupDailyStatus(
 
 export function getGroupSolveHistory(
   groupId: string,
-  dateString: string,
   mode: GroupMode = "daily"
 ): string[] {
   const tableName = getSolveTableName(mode);
@@ -387,10 +386,10 @@ export function getGroupSolveHistory(
       `
         SELECT DISTINCT date
         FROM ${tableName}
-        WHERE group_id = ? AND solved = 1 AND strftime('%Y-%m', date) = ?
+        WHERE group_id = ? AND solved = 1
         ORDER BY date ASC
       `
     )
-    .all(groupId, dateString) as Array<{ date: string }>;
+    .all(groupId) as Array<{ date: string }>;
   return rows.map((row) => row.date);
 }

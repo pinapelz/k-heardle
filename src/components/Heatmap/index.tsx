@@ -1,5 +1,5 @@
 import React from "react";
-import styled from "styled-components";
+
 import HeatMap, { type HeatMapValue } from "@uiw/react-heat-map";
 
 export interface HeatmapProps {
@@ -34,6 +34,18 @@ const Heatmap = React.forwardRef<HTMLDivElement, HeatmapProps>(
     const resolvedStartDate =
       startDate ?? (value.length > 0 ? new Date(value[0].date) : new Date());
 
+    const resolvedEndDate = endDate ?? new Date();
+    const startOfWeek = new Date(resolvedStartDate);
+    startOfWeek.setHours(0, 0, 0, 0);
+    startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay());
+    const daysInRange = Math.max(
+      1,
+      Math.floor(
+        (resolvedEndDate.getTime() - startOfWeek.getTime()) / (24 * 60 * 60 * 1000)
+      ) + 1
+    );
+    const heatmapWidth = Math.ceil(daysInRange / 7) * 22 + 28;
+
     const rectRender = React.useCallback<
       (
         props: React.SVGProps<SVGRectElement>,
@@ -51,16 +63,18 @@ const Heatmap = React.forwardRef<HTMLDivElement, HeatmapProps>(
     );
 
     return (
-          <HeatMap
-            style={{ color: '#fffffff' }}
-            value={value}
-            startDate={resolvedStartDate}
-            endDate={endDate}
-            panelColors={PANEL_COLORS}
-            rectSize={20}
-            legendCellSize={0}
-            rectRender={rectRender}
-          />
+      <div ref={ref} style={{ width: "100%", overflowX: "auto" }}>
+        <HeatMap
+          style={{ color: "#ffffff", width: `${heatmapWidth}px`, maxWidth: "none" }}
+          value={value}
+          startDate={resolvedStartDate}
+          endDate={endDate}
+          panelColors={PANEL_COLORS}
+          rectSize={20}
+          legendCellSize={0}
+          rectRender={rectRender}
+        />
+      </div>
     );
   }
 );
