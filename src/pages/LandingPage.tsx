@@ -29,6 +29,8 @@ export function LandingPage() {
   const [isCreateOpen, setIsCreateOpen] = React.useState(false);
   const [isJoinOpen, setIsJoinOpen] = React.useState(false);
 
+  const HERO_IMAGE_URL = import.meta.env.VITE_HERO_IMAGE_URL;
+
   const createNewGroup = React.useCallback(async () => {
     if (!groupName.trim() || !username.trim()) {
       setCreateMessage("Enter group name and username.");
@@ -94,7 +96,7 @@ export function LandingPage() {
       <Styles.Hero>
         <Styles.Title>{appName}</Styles.Title>
         <Styles.HeroImage>
-          <img src="https://yena.pinapelz.com/kheardle/nmixx.webp" alt="NMIXX" />
+          <img src={HERO_IMAGE_URL} alt="NMIXX" />
         </Styles.HeroImage>
         <Styles.Subtitle>a kpop music guessing game</Styles.Subtitle>
       </Styles.Hero>
