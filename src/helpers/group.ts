@@ -166,18 +166,3 @@ export async function getGroupSolveHistory(
 
   return (await response.json()) as GroupSolveHistory;
 }
-
-export async function getGroupSolveHistoryByName(
-  name: string,
-  mode: GroupStatusMode = "daily"
-): Promise<GroupSolveHistory> {
-  const response = await fetch(
-    `${API_URL}/group-statistics?name=${encodeURIComponent(name)}&mode=${encodeURIComponent(mode)}`
-  );
-
-  if (!response.ok) {
-    throw new Error(`Failed to fetch solve history: ${response.statusText}`);
-  }
-
-  return (await response.json()) as GroupSolveHistory;
-}

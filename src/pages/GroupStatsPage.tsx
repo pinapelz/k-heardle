@@ -3,7 +3,9 @@ import { useNavigate, useParams } from "react-router-dom";
 import { Heatmap } from "../components/Heatmap";
 import {
   getGroupSolveHistoryByName,
+  getGroupDailyStatus,
   type GroupStatusMode,
+  type GroupDailyStatus,
 } from "../helpers/group";
 import * as Styles from "../styles/group-stats-styles";
 
@@ -35,6 +37,7 @@ export function GroupStatsPage() {
   const [error, setError] = React.useState("");
   const [solvedDates, setSolvedDates] = React.useState<string[]>([]);
   const [hasLoaded, setHasLoaded] = React.useState(false);
+  const [groupStatus, setGroupStatus] = React.useState<GroupDailyStatus | null>(null);
 
   const loadHistory = React.useCallback(
     async (targetMode: GroupStatusMode) => {
@@ -61,9 +64,25 @@ export function GroupStatsPage() {
     [groupName]
   );
 
+
   React.useEffect(() => {
     loadHistory(mode);
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  React.useEffect(() => {
+    if (!hasLoaded) return;
+    getGroupDailyStatus(membership.groupId, sessionDate, chartMode)
+      .then((status) => {
+        if (!cancelled) {
+          setGroupStatus(status);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setGroupStatus(null);
+        }
+      });
   }, []);
 
   React.useEffect(() => {
