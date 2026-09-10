@@ -1,4 +1,4 @@
-import styled from "styled-components";
+import styled, { keyframes } from "styled-components";
 
 export const Container = styled.div`
   width: 100%;
@@ -206,6 +206,13 @@ export const StreakValue = styled.strong`
   color: var(--cl-cyan-6);
 `;
 
+export const DateLoadingInline = styled.span`
+  margin-left: auto;
+  font-family: "Roboto Mono", monospace;
+  font-size: 0.72rem;
+  color: var(--cl-gray-7);
+`;
+
 export const DayTableWrap = styled.div`
   display: flex;
   flex-direction: column;
@@ -217,6 +224,33 @@ export const DayTableTitle = styled.p`
   font-family: "Roboto Mono", monospace;
   font-size: 0.8rem;
   color: var(--cl-gray-7);
+`;
+
+const spin = keyframes`
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+`;
+
+export const DateLoading = styled.div`
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: "Roboto Mono", monospace;
+  font-size: 0.8rem;
+  color: var(--cl-gray-7);
+`;
+
+export const Spinner = styled.span`
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  border: 2px solid var(--cl-gray-5);
+  border-top-color: var(--cl-cyan-6);
+  animation: ${spin} 0.8s linear infinite;
 `;
 
 export const DayTable = styled.table`

@@ -64,6 +64,7 @@ export function GroupStatsPage() {
   const [solvedDates, setSolvedDates] = React.useState<string[]>([]);
   const [hasLoaded, setHasLoaded] = React.useState(false);
   const [selectedDate, setSelectedDate] = React.useState(getUtcDate());
+  const [isDateLoading, setIsDateLoading] = React.useState(false);
   const [groupStatus, setGroupStatus] = React.useState<GroupDailyStatus | null>(null);
   const [daySolves, setDaySolves] = React.useState<GroupDaySolve[]>([]);
 
@@ -130,9 +131,34 @@ export function GroupStatsPage() {
     loadHistory(mode);
   }, [mode, loadHistory]);
 
+  const loadSelectedDateData = React.useCallback(
+    async (targetMode: GroupStatusMode, targetDate: string) => {
+      setIsDateLoading(true);
+      await Promise.all([
+        loadGroupStatus(targetMode, targetDate),
+        loadDayStats(targetMode, targetDate),
+      ]);
+      setIsDateLoading(false);
+    },
+    [loadGroupStatus, loadDayStats]
+  );
+
   React.useEffect(() => {
-    loadGroupStatus(mode, selectedDate);
-    loadDayStats(mode, selectedDate);
+    let cancelled = false;
+
+    setIsDateLoading(true);
+    Promise.all([
+      loadGroupStatus(mode, selectedDate),
+      loadDayStats(mode, selectedDate),
+    ]).finally(() => {
+      if (!cancelled) {
+        setIsDateLoading(false);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
   }, [mode, selectedDate, loadGroupStatus, loadDayStats]);
 
   const heatmapValue = React.useMemo(
@@ -172,8 +198,7 @@ export function GroupStatsPage() {
         <Styles.LoadButton
           onClick={() => {
             loadHistory(mode);
-            loadGroupStatus(mode, selectedDate);
-            loadDayStats(mode, selectedDate);
+            loadSelectedDateData(mode, selectedDate);
           }}
           disabled={isLoading}
         >
@@ -189,6 +214,7 @@ export function GroupStatsPage() {
       <Styles.StreakCard>
         <Styles.StreakLabel>Current Streak</Styles.StreakLabel>
         <Styles.StreakValue>{groupStatus?.currentStreak ?? 0} {(groupStatus?.currentStreak ?? 0) === 1 ? "day" : "days"}</Styles.StreakValue>
+        {isDateLoading && <Styles.DateLoadingInline>Updating…</Styles.DateLoadingInline>}
       </Styles.StreakCard>
       {!error && hasLoaded && (
         <Styles.HeatmapCard>
@@ -203,7 +229,12 @@ export function GroupStatsPage() {
 
           <Styles.DayTableWrap>
             <Styles.DayTableTitle>Daily stats for {new Date(selectedDate.replace(/-/g, "/")).toLocaleDateString()}</Styles.DayTableTitle>
-            {daySolves.length === 0 ? (
+            {isDateLoading ? (
+              <Styles.DateLoading>
+                <Styles.Spinner />
+                Loading date stats...
+              </Styles.DateLoading>
+            ) : daySolves.length === 0 ? (
               <Styles.Status>No attempts recorded for this date.</Styles.Status>
             ) : (
               <Styles.DayTable>
@@ -212,18 +243,15 @@ export function GroupStatsPage() {
                     <th>User</th>
                     <th>Attempts</th>
                     <th>Solved</th>
-                    <th>Missed</th>
                   </tr>
                 </thead>
                 <tbody>
                   {daySolves.map((entry) => {
-                    const missed = entry.attempts >= 6 && !entry.solved;
                     return (
                       <tr key={entry.username}>
                         <td>{entry.username}</td>
                         <td>{entry.attempts}</td>
                         <td>{entry.solved ? "Yes" : "No"}</td>
-                        <td>{missed ? "Yes" : "No"}</td>
                       </tr>
                     );
                   })}
