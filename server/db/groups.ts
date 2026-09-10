@@ -388,7 +388,7 @@ export function getGroupSolveHistory(
 export function getSolvesForDate(groupId: string, mode: GroupMode, date: string) {
   const tableName = getSolveTableName(mode);
   const rows = db.prepare(`
-    SELECT username, attempts, solved, guessed
+    SELECT username, attempts, solved
     FROM ${tableName}
     WHERE group_id = ? AND date = ?
     ORDER BY username ASC
@@ -396,12 +396,10 @@ export function getSolvesForDate(groupId: string, mode: GroupMode, date: string)
     username: string;
     attempts: number;
     solved: number;
-    guessed: number;
   }>;
   return rows.map((row) => ({
     username: row.username,
     attempts: row.attempts,
     solved: row.solved === 1,
-    guessed: row.guessed === 1,
   }));
 }

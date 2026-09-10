@@ -180,3 +180,64 @@ export const HeatmapCard = styled.div`
     padding: 12px;
   }
 `;
+
+export const StreakCard = styled.div`
+  border: 1px solid var(--cl-gray-4);
+  border-radius: 8px;
+  padding: 10px 12px;
+  background: var(--cl-gray-2);
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+`;
+
+export const StreakLabel = styled.span`
+  font-family: "Roboto Mono", monospace;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--cl-gray-7);
+`;
+
+export const StreakValue = styled.strong`
+  font-family: "Roboto Mono", monospace;
+  font-size: 1rem;
+  color: var(--cl-cyan-6);
+`;
+
+export const DayTableWrap = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+`;
+
+export const DayTableTitle = styled.p`
+  margin: 0;
+  font-family: "Roboto Mono", monospace;
+  font-size: 0.8rem;
+  color: var(--cl-gray-7);
+`;
+
+export const DayTable = styled.table`
+  width: 100%;
+  border-collapse: collapse;
+  font-family: "Roboto Mono", monospace;
+  font-size: 0.78rem;
+
+  th,
+  td {
+    border: 1px solid var(--cl-gray-4);
+    padding: 8px;
+    text-align: left;
+  }
+
+  th {
+    color: var(--cl-gray-8);
+    font-weight: 600;
+  }
+
+  td {
+    color: var(--cl-gray-10);
+  }
+`;

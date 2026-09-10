@@ -12,6 +12,8 @@ export interface CalendarProps {
   value: CalendarValue[];
   startDate?: Date;
   endDate?: Date;
+  selectedDate?: Date;
+  onDateClick?: (date: Date) => void;
 }
 
 function parseDateOnly(input: string): Date | null {
@@ -113,7 +115,7 @@ const SolvedMarker = styled.span`
 `;
 
 const Heatmap = React.forwardRef<HTMLDivElement, CalendarProps>(
-  ({ value, startDate, endDate }, ref) => {
+  ({ value, startDate, endDate, selectedDate, onDateClick }, ref) => {
     const solvedByDate = React.useMemo(() => {
       const map = new Map<string, number>();
 
@@ -154,6 +156,10 @@ const Heatmap = React.forwardRef<HTMLDivElement, CalendarProps>(
       <Wrapper ref={ref}>
         <Calendar
           activeStartDate={activeStartDate}
+          value={selectedDate}
+          onClickDay={(date) => {
+            onDateClick?.(date);
+          }}
           onActiveStartDateChange={({ activeStartDate: next }) => {
             if (next) setActiveStartDate(clampMonth(next, startDate, endDate));
           }}

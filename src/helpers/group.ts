@@ -152,12 +152,25 @@ export interface GroupSolveHistory {
   solvedDates: string[];
 }
 
+export interface GroupDaySolve {
+  username: string;
+  attempts: number;
+  solved: boolean;
+}
+
+export interface GroupDayStats {
+  groupId: string;
+  date: string;
+  mode: "daily" | "mv";
+  solves: GroupDaySolve[];
+}
+
 export async function getGroupSolveHistory(
-  groupId: string,
+  id: string,
   mode: GroupStatusMode = "daily"
 ): Promise<GroupSolveHistory> {
   const response = await fetch(
-    `${API_URL}/group-statistics?groupId=${encodeURIComponent(groupId)}&mode=${encodeURIComponent(mode)}`
+    `${API_URL}/group-statistics?groupId=${encodeURIComponent(id)}&mode=${encodeURIComponent(mode)}`
   );
 
   if (!response.ok) {
@@ -165,4 +178,20 @@ export async function getGroupSolveHistory(
   }
 
   return (await response.json()) as GroupSolveHistory;
+}
+
+export async function getGroupDayStats(
+  groupId: string,
+  date: string,
+  mode: GroupStatusMode = "daily"
+): Promise<GroupDayStats> {
+  const response = await fetch(
+    `${API_URL}/day-stats?groupId=${encodeURIComponent(groupId)}&date=${encodeURIComponent(date)}&mode=${encodeURIComponent(mode)}`
+  );
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch day stats: ${response.statusText}`);
+  }
+
+  return (await response.json()) as GroupDayStats;
 }
