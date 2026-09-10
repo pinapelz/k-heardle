@@ -142,9 +142,8 @@ const Heatmap = React.forwardRef<HTMLDivElement, CalendarProps>(
     );
 
     const initialMonth = React.useMemo(() => {
-      const base = startDate ?? sortedSolvedDates[0] ?? new Date();
-      return clampMonth(base, startDate, endDate);
-    }, [startDate, endDate, sortedSolvedDates]);
+      return clampMonth(new Date(), startDate, endDate);
+    }, [startDate, endDate]);
 
     const [activeStartDate, setActiveStartDate] = React.useState<Date>(initialMonth);
 
