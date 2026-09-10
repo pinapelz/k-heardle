@@ -8,16 +8,11 @@ import {
 import * as Styles from "../styles/group-stats-styles";
 
 
-// Display the complete history without shifting date-only values across time zones.
 function historyDateRange(solvedDates: string[]): {
   startDate?: Date;
   endDate?: Date;
 } {
   if (solvedDates.length === 0) return {};
-
-  // Use local date constructors because the heatmap library treats date-only
-  // values as local dates. Using Date.UTC here can shift the first day back
-  // one day in time zones west of UTC.
   const startDate = new Date(solvedDates[0].replace(/-/g, "/"));
   const today = new Date();
   const endDate = new Date(
@@ -66,13 +61,11 @@ export function GroupStatsPage() {
     [groupName]
   );
 
-  // Initial load.
   React.useEffect(() => {
     loadHistory(mode);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Reload whenever the selected mode changes.
   React.useEffect(() => {
     if (!hasLoaded) return;
     loadHistory(mode);

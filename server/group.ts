@@ -6,6 +6,7 @@ import {
   getGroupSolveHistory,
   recordGroupJoin,
   getGroupById,
+  getSolvesForDate
 } from "./db/groups";
 import { getUtcDate } from "./shared";
 
@@ -129,3 +130,27 @@ groupRouter.get("/group-statistics", (req, res) => {
     solvedDates,
   });
 });
+
+
+groupRouter.get("/day-stats", (req, res) => {
+  const groupId = req.query.groupId?.toString();
+  const dateString = req.query.date?.toString();
+  const mode = req.query.mode;
+  if (!validateGroupId(groupId) || groupId === undefined) {
+    res.status(400).json({ error: "invalid groupId" });
+    return;
+  }
+  if (dateString === undefined) {
+    res.status(400).json({ error: "invalid date" });
+    return;
+  }
+  const normalizedMode = mode === "mv" || mode === "dailyMV" ? "mv" : "daily";
+  const dateSolveData = getSolvesForDate(groupId, normalizedMode, dateString);
+  res.json({
+    groupId: groupId,
+    date: dateString,
+    mode: normalizedMode,
+    solves: dateSolveData,
+  });
+
+})

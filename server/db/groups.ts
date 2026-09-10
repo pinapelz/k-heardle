@@ -384,3 +384,24 @@ export function getGroupSolveHistory(
     .all(groupId) as Array<{ date: string }>;
   return rows.map((row) => row.date);
 }
+
+export function getSolvesForDate(groupId: string, mode: GroupMode, date: string) {
+  const tableName = getSolveTableName(mode);
+  const rows = db.prepare(`
+    SELECT username, attempts, solved, guessed
+    FROM ${tableName}
+    WHERE group_id = ? AND date = ?
+    ORDER BY username ASC
+  `).all(groupId, date) as Array<{
+    username: string;
+    attempts: number;
+    solved: number;
+    guessed: number;
+  }>;
+  return rows.map((row) => ({
+    username: row.username,
+    attempts: row.attempts,
+    solved: row.solved === 1,
+    guessed: row.guessed === 1,
+  }));
+}
