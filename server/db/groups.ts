@@ -194,31 +194,22 @@ export function createGroup(name: string) {
   };
 }
 
-export function getGroupByName(
-  name: string
-): { id: string; name: string; joinCode: string } | null {
-  const normalizedName = name.trim();
-  if (!normalizedName) return null;
-
+export function getGroupById(id: string): { id: string; name: string } | null {
   const group = db
     .prepare(
       `
-      SELECT id, name, join_code
+      SELECT id, name
       FROM groups
-      WHERE name = ?
+      WHERE id = ?
     `
     )
-    .get(normalizedName) as
-    | { id: string; name: string; join_code: string }
-    | undefined;
-
+    .get(id) as { id: string; name: string } | undefined;
   if (!group) return null;
-
   return {
     id: group.id,
     name: group.name,
-    joinCode: group.join_code,
   };
+
 }
 
 export function getGroupByJoinCode(

@@ -3,13 +3,24 @@ import {
   createGroup,
   getGroupDailyStatus,
   getGroupByJoinCode,
-  getGroupByName,
   getGroupSolveHistory,
   recordGroupJoin,
+  getGroupById,
 } from "./db/groups";
 import { getUtcDate } from "./shared";
 
 export const groupRouter = Router();
+
+const validateGroupId = (groupId: unknown) => {
+  if (typeof groupId !== "string" || groupId.trim().length === 0) {
+    return false;
+  }
+
+  if (!getGroupById(groupId)) {
+    return false;
+  }
+  return true;
+};
 
 groupRouter.post("/create-group", (req, res) => {
   const body = req.body as {
@@ -102,30 +113,17 @@ groupRouter.get("/group-status", (req, res) => {
 
 
 groupRouter.get("/group-statistics", (req, res) => {
-  const groupId = req.query.groupId;
-  const name = req.query.name;
+  const groupId: string | undefined = req.query.groupId?.toString();
   const mode = req.query.mode;
 
-  let resolvedGroupId: string | null = null;
-  if (typeof groupId === "string" && groupId.trim().length > 0) {
-    resolvedGroupId = groupId.trim();
-  } else if (typeof name === "string" && name.trim().length > 0) {
-    const group = getGroupByName(name);
-    if (!group) {
-      res.status(404).json({ error: "Group not found." });
-      return;
-    }
-    resolvedGroupId = group.id;
-  } else {
-    res.status(400).json({ error: "groupId or name is required." });
+  if(!validateGroupId(groupId) || groupId === undefined) {
+    res.status(400).json({ error: "invalid groupId" });
     return;
   }
-
   const normalizedMode = mode === "mv" || mode === "dailyMV" ? "mv" : "daily";
-  const solvedDates = getGroupSolveHistory(resolvedGroupId, normalizedMode);
-
+  const solvedDates = getGroupSolveHistory(groupId, normalizedMode);
   res.json({
-    groupId: resolvedGroupId,
+    groupId: groupId,
     month: "all",
     mode: normalizedMode,
     solvedDates,
