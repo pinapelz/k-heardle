@@ -1,3 +1,5 @@
+import { readFileSync, writeFileSync } from "fs";
+import { resolve } from "path";
 import { createHash, createHmac, timingSafeEqual } from "crypto";
 import { songs } from "./data/songs";
 import { songs as musicVideos } from "./data/mvs";
@@ -5,7 +7,15 @@ import { songs as musicVideos } from "./data/mvs";
 const DAILY_START_DATE = "2026-06-01T00:00:00Z";
 const DAILY_START_MS = Date.parse(DAILY_START_DATE);
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
+const DAILY_CACHE_FILE = resolve(__dirname, "daily-cache.json");
 
+type DailyCache = {
+  date: string;
+  song: Song;
+  musicVideo: Song;
+};
+
+let inMemoryDailyCache: DailyCache | null = null;
 
 function getSalt(): string {
   return process.env.VITE_HEARDLE_SALT ?? "changeme";
@@ -80,6 +90,64 @@ function shuffleSongs<T>(seed: string, list: readonly T[]): T[] {
   return result;
 }
 
+function isSongLike(value: unknown): value is Song {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+  const artist = (value as { artist?: unknown }).artist;
+  const name = (value as { name?: unknown }).name;
+  return typeof artist === "string" && typeof name === "string";
+}
+
+function readDailyCache(): DailyCache | null {
+  try {
+    const raw = readFileSync(DAILY_CACHE_FILE, "utf8");
+    const parsed = JSON.parse(raw) as {
+      date?: unknown;
+      song?: unknown;
+      musicVideo?: unknown;
+    };
+
+    if (typeof parsed.date !== "string") return null;
+    if (!isSongLike(parsed.song)) return null;
+    if (!isSongLike(parsed.musicVideo)) return null;
+
+    return {
+      date: parsed.date,
+      song: parsed.song,
+      musicVideo: parsed.musicVideo,
+    };
+  } catch {
+    return null;
+  }
+}
+
+function writeDailyCache(cache: DailyCache): void {
+  writeFileSync(DAILY_CACHE_FILE, `${JSON.stringify(cache, null, 2)}\n`, "utf8");
+}
+
+function getTodayDailyCache(): DailyCache {
+  const today = getUtcDate();
+
+  if (inMemoryDailyCache && inMemoryDailyCache.date === today) {
+    return inMemoryDailyCache;
+  }
+
+  const fileCache = readDailyCache();
+  if (fileCache && fileCache.date === today) {
+    inMemoryDailyCache = fileCache;
+    return fileCache;
+  }
+
+  const nextCache: DailyCache = {
+    date: today,
+    song: pickSong(today),
+    musicVideo: pickMusicVideo(today),
+  };
+
+  writeDailyCache(nextCache);
+  inMemoryDailyCache = nextCache;
+  return nextCache;
+}
+
 export const DAILY_SONG_ORDER: Song[] = shuffleSongs(getSalt(), songs);
 export const DAILY_MV_ORDER: Song[] = shuffleSongs(getSalt() + "-mv", musicVideos);
 
@@ -90,6 +158,10 @@ export function pickSong(date: string): Song {
 }
 
 export function getDailySong(today: string): Song {
+  if (today === getUtcDate()) {
+    return getTodayDailyCache().song;
+  }
+
   return pickSong(today);
 }
 
@@ -100,6 +172,10 @@ export function pickMusicVideo(date: string): Song {
 }
 
 export function getDailyMusicVideo(today: string): Song {
+  if (today === getUtcDate()) {
+    return getTodayDailyCache().musicVideo;
+  }
+
   return pickMusicVideo(today);
 }
 
