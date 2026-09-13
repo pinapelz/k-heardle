@@ -213,7 +213,16 @@ export function GroupStatsPage() {
       )}
       <Styles.StreakCard>
         <Styles.StreakLabel>Current Streak</Styles.StreakLabel>
-        <Styles.StreakValue>{groupStatus?.currentStreak ?? 0} {(groupStatus?.currentStreak ?? 0) === 1 ? "day" : "days"}</Styles.StreakValue>
+        <Styles.StreakValue>
+          {groupStatus ? (
+            <>
+              {groupStatus.streakAtRisk ? "⚠️ " : ""}
+              {groupStatus.currentStreak} {groupStatus.currentStreak === 1 ? "day" : "days"}
+            </>
+          ) : (
+            "—"
+          )}
+        </Styles.StreakValue>
         {isDateLoading && <Styles.DateLoadingInline>Updating…</Styles.DateLoadingInline>}
       </Styles.StreakCard>
       {!error && hasLoaded && (

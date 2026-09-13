@@ -126,12 +126,18 @@ function getActiveGroupStreak(
 ): {
   currentStreak: number;
   lastCompleted: string | null;
+  streakAtRisk: boolean
 } {
   const solvedDates = getSolvedDatesForGroup(groupId, mode, today);
   const computed = computeStreakFromSolvedDates(solvedDates, today);
+  // Streak is at risk when yesterday was the most recent completed day and today is still unsolved.
+  const streakAtRisk = computed.lastCompleted === previousUtcDate(today);
 
   if (!persist) {
-    return computed;
+    return {
+      ...computed,
+      streakAtRisk,
+    };
   }
 
   const stored = getStoredGroupStreak(groupId, mode);
@@ -149,7 +155,10 @@ function getActiveGroupStreak(
     ).run(computed.currentStreak, computed.lastCompleted, groupId);
   }
 
-  return computed;
+  return {
+    ...computed,
+    streakAtRisk,
+  };
 }
 
 function updateGroupStreakForToday(
@@ -336,7 +345,7 @@ export function getGroupDailyStatus(
   groupId: string;
   groupName: string;
   currentStreak: number;
-  lastCompleted: string | null;
+  streakAtRisk: boolean;
   finishedUsers: string[];
 } | null {
   const group = db
@@ -368,7 +377,7 @@ export function getGroupDailyStatus(
     groupId: group.id,
     groupName: group.name,
     currentStreak: streak.currentStreak,
-    lastCompleted: streak.lastCompleted,
+    streakAtRisk: streak.streakAtRisk,
     finishedUsers: finishedRows.map((row) => row.username),
   };
 }

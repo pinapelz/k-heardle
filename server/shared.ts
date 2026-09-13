@@ -56,8 +56,10 @@ export function xorBuffer(data: Buffer, key: Buffer): Buffer {
   return output;
 }
 
-export function getUtcDate(): string {
-  return new Date().toISOString().slice(0, 10);
+export function getUtcDate(offset: number = 0): string {
+  const date = new Date();
+  date.setUTCDate(date.getUTCDate() + offset);
+  return date.toISOString().slice(0, 10);
 }
 
 function daysSinceStart(date: string): number {

@@ -13,6 +13,7 @@ export interface GroupDailyStatus {
   groupId: string;
   groupName: string;
   currentStreak: number;
+  streakAtRisk: boolean;
   finishedUsers: string[];
 }
 
