@@ -4,6 +4,7 @@ import {
   getGroupDailyStatus,
   getGroupByJoinCode,
   getGroupSolveHistory,
+  getGroupUnsolvedAttemptHistory,
   recordGroupJoin,
   getGroupById,
   getSolvesForDate
@@ -123,11 +124,13 @@ groupRouter.get("/group-statistics", (req, res) => {
   }
   const normalizedMode = mode === "mv" || mode === "dailyMV" ? "mv" : "daily";
   const solvedDates = getGroupSolveHistory(groupId, normalizedMode);
+  const attemptedDates = getGroupUnsolvedAttemptHistory(groupId, normalizedMode);
   res.json({
     groupId: groupId,
     month: "all",
     mode: normalizedMode,
     solvedDates,
+    attemptedDates,
   });
 });
 

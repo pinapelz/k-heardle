@@ -114,32 +114,34 @@ const SolvedMarker = styled.span`
   background: var(--cl-cyan-6, #2dd4bf);
 `;
 
+const AttemptedMarker = styled(SolvedMarker)`
+  background: var(--cl-gray-7, #808080);
+`;
+
 const Heatmap = React.forwardRef<HTMLDivElement, CalendarProps>(
   ({ value, startDate, endDate, selectedDate, onDateClick }, ref) => {
-    const solvedByDate = React.useMemo(() => {
-      const map = new Map<string, number>();
+    const dayStatusByDate = React.useMemo(() => {
+      const map = new Map<string, "solved" | "attempted">();
 
       for (const entry of value) {
         const parsed = parseDateOnly(entry.date);
         if (!parsed) continue;
 
+        const dayKey = toDayKey(parsed);
         const solvedCount = entry.count ?? 1;
-        if (solvedCount <= 0) continue;
 
-        map.set(toDayKey(parsed), solvedCount);
+        if (solvedCount > 0) {
+          map.set(dayKey, "solved");
+          continue;
+        }
+
+        if (!map.has(dayKey)) {
+          map.set(dayKey, "attempted");
+        }
       }
 
       return map;
     }, [value]);
-
-    const sortedSolvedDates = React.useMemo(
-      () =>
-        [...solvedByDate.keys()]
-          .map((key) => parseDateOnly(key))
-          .filter((d): d is Date => Boolean(d))
-          .sort((a, b) => a.getTime() - b.getTime()),
-      [solvedByDate]
-    );
 
     const initialMonth = React.useMemo(() => {
       return clampMonth(new Date(), startDate, endDate);
@@ -169,18 +171,22 @@ const Heatmap = React.forwardRef<HTMLDivElement, CalendarProps>(
           showNeighboringMonth={false}
           tileContent={({ date, view }) => {
             if (view !== "month") return null;
-            if (!solvedByDate.has(toDayKey(date))) return null;
 
-            return (
-              <SolvedMarker
-                title={`${date.toLocaleDateString(undefined, {
-                  weekday: "short",
-                  year: "numeric",
-                  month: "short",
-                  day: "numeric",
-                })} solved`}
-              />
-            );
+            const status = dayStatusByDate.get(toDayKey(date));
+            if (!status) return null;
+
+            const formatted = date.toLocaleDateString(undefined, {
+              weekday: "short",
+              year: "numeric",
+              month: "short",
+              day: "numeric",
+            });
+
+            if (status === "attempted") {
+              return <AttemptedMarker title={`${formatted} attempted`} />;
+            }
+
+            return <SolvedMarker title={`${formatted} solved`} />;
           }}
         />
       </Wrapper>

@@ -39,3 +39,4 @@ TODO
 dist
 .env
 k-heardle.db
+daily-cache.json

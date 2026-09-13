@@ -62,6 +62,7 @@ export function GroupStatsPage() {
   const [isLoading, setIsLoading] = React.useState(false);
   const [error, setError] = React.useState("");
   const [solvedDates, setSolvedDates] = React.useState<string[]>([]);
+  const [attemptedDates, setAttemptedDates] = React.useState<string[]>([]);
   const [hasLoaded, setHasLoaded] = React.useState(false);
   const [selectedDate, setSelectedDate] = React.useState(getUtcDate());
   const [isDateLoading, setIsDateLoading] = React.useState(false);
@@ -80,8 +81,10 @@ export function GroupStatsPage() {
       try {
         const history = await getGroupSolveHistory(groupId, targetMode);
         setSolvedDates(history.solvedDates);
+        setAttemptedDates(history.attemptedDates ?? []);
       } catch (err) {
         setSolvedDates([]);
+        setAttemptedDates([]);
         setError(
           err instanceof Error ? err.message : "Unable to load solve history."
         );
@@ -162,15 +165,25 @@ export function GroupStatsPage() {
   }, [mode, selectedDate, loadGroupStatus, loadDayStats]);
 
   const heatmapValue = React.useMemo(
-    () =>
-      solvedDates.map((date) => ({
+    () => [
+      ...solvedDates.map((date) => ({
         date: date.replace(/-/g, "/"),
         count: 1,
       })),
-    [solvedDates]
+      ...attemptedDates.map((date) => ({
+        date: date.replace(/-/g, "/"),
+        count: 0,
+      })),
+    ],
+    [solvedDates, attemptedDates]
   );
 
-  const { startDate, endDate } = historyDateRange(solvedDates);
+  const historyDates = React.useMemo(
+    () => [...solvedDates, ...attemptedDates].sort(),
+    [solvedDates, attemptedDates]
+  );
+
+  const { startDate, endDate } = historyDateRange(historyDates);
 
   return (
     <Styles.Container>

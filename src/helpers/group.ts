@@ -151,6 +151,7 @@ export interface GroupSolveHistory {
   month: string;
   mode: "daily" | "mv";
   solvedDates: string[];
+  attemptedDates: string[];
 }
 
 export interface GroupDaySolve {

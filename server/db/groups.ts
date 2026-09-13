@@ -400,6 +400,27 @@ export function getGroupSolveHistory(
   return rows.map((row) => row.date);
 }
 
+export function getGroupUnsolvedAttemptHistory(
+  groupId: string,
+  mode: GroupMode = "daily"
+): string[] {
+  const tableName = getSolveTableName(mode);
+  const rows = db
+    .prepare(
+      `
+        SELECT date
+        FROM ${tableName}
+        WHERE group_id = ?
+        GROUP BY date
+        HAVING COUNT(*) > 0
+          AND SUM(CASE WHEN solved = 1 THEN 1 ELSE 0 END) = 0
+        ORDER BY date ASC
+      `
+    )
+    .all(groupId) as Array<{ date: string }>;
+  return rows.map((row) => row.date);
+}
+
 export function getSolvesForDate(
   groupId: string,
   mode: GroupMode,
