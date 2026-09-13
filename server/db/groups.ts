@@ -31,7 +31,10 @@ function getStreakColumns(mode: GroupMode): {
   };
 }
 
-function getSolvedDatesForGroup(groupId: string, mode: GroupMode, upperBoundDate: string
+function getSolvedDatesForGroup(
+  groupId: string,
+  mode: GroupMode,
+  upperBoundDate: string
 ): string[] {
   const tableName = getSolveTableName(mode);
   const rows = db
@@ -103,8 +106,7 @@ function getStoredGroupStreak(
     `
     )
     .get(groupId) as
-    | { current_streak: number; last_completed: string | null }
-    | undefined;
+    { current_streak: number; last_completed: string | null } | undefined;
 
   if (!row) {
     return { currentStreak: 0, lastCompleted: null };
@@ -211,7 +213,6 @@ export function getGroupById(id: string): { id: string; name: string } | null {
     id: group.id,
     name: group.name,
   };
-
 }
 
 export function getGroupByJoinCode(
@@ -228,8 +229,7 @@ export function getGroupByJoinCode(
     `
     )
     .get(normalizedCode) as
-    | { id: string; name: string; join_code: string }
-    | undefined;
+    { id: string; name: string; join_code: string } | undefined;
 
   if (!group) return null;
 
@@ -276,7 +276,9 @@ function recordSolve(
 ) {
   const today = getUtcDate();
   if (date !== today) {
-    throw new Error(`Only today's solves can be recorded. Expected ${today}, got ${date}.`);
+    throw new Error(
+      `Only today's solves can be recorded. Expected ${today}, got ${date}.`
+    );
   }
 
   const normalizedUsername = username.trim().slice(0, 32);
@@ -359,7 +361,8 @@ export function getGroupDailyStatus(
         AND (solved = 1 OR attempts >= 6)
       ORDER BY username ASC
     `
-    ).all(groupId, date) as Array<{ username: string }>;
+    )
+    .all(groupId, date) as Array<{ username: string }>;
 
   return {
     groupId: group.id,
@@ -388,14 +391,22 @@ export function getGroupSolveHistory(
   return rows.map((row) => row.date);
 }
 
-export function getSolvesForDate(groupId: string, mode: GroupMode, date: string) {
+export function getSolvesForDate(
+  groupId: string,
+  mode: GroupMode,
+  date: string
+) {
   const tableName = getSolveTableName(mode);
-  const rows = db.prepare(`
+  const rows = db
+    .prepare(
+      `
     SELECT username, attempts, solved
     FROM ${tableName}
     WHERE group_id = ? AND date = ?
     ORDER BY username ASC
-  `).all(groupId, date) as Array<{
+  `
+    )
+    .all(groupId, date) as Array<{
     username: string;
     attempts: number;
     solved: number;
