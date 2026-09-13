@@ -246,7 +246,6 @@ export function recordGroupJoin(groupId: string, username: string) {
     throw new Error("Username is required");
   }
 
-  // Check if the user is already a member of the group
   const existingJoin = db
     .prepare(
       `
@@ -335,6 +334,7 @@ export function getGroupDailyStatus(
   groupId: string;
   groupName: string;
   currentStreak: number;
+  lastCompleted: string | null;
   finishedUsers: string[];
 } | null {
   const group = db
@@ -365,6 +365,7 @@ export function getGroupDailyStatus(
     groupId: group.id,
     groupName: group.name,
     currentStreak: streak.currentStreak,
+    lastCompleted: streak.lastCompleted,
     finishedUsers: finishedRows.map((row) => row.username),
   };
 }
