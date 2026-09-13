@@ -31,20 +31,59 @@ function getStreakColumns(mode: GroupMode): {
   };
 }
 
-function isGroupSolvedOnDate(groupId: string, date: string, mode: GroupMode): boolean {
+function getSolvedDatesForGroup(groupId: string, mode: GroupMode, upperBoundDate: string
+): string[] {
   const tableName = getSolveTableName(mode);
-  const solvedCount = db
+  const rows = db
     .prepare(
       `
-      SELECT COUNT(DISTINCT username) as count
+      SELECT DISTINCT date
       FROM ${tableName}
-      WHERE group_id = ? AND date = ?
+      WHERE group_id = ?
         AND solved = 1
+        AND date <= ?
+      ORDER BY date DESC
     `
     )
-    .get(groupId, date) as { count: number };
+    .all(groupId, upperBoundDate) as Array<{ date: string }>;
 
-  return !!solvedCount && solvedCount.count >= 1;
+  return rows.map((row) => row.date);
+}
+
+function computeStreakFromSolvedDates(
+  solvedDatesDesc: string[],
+  today: string
+): {
+  currentStreak: number;
+  lastCompleted: string | null;
+} {
+  const lastCompleted = solvedDatesDesc[0] ?? null;
+
+  if (!lastCompleted) {
+    return { currentStreak: 0, lastCompleted: null };
+  }
+
+  const yesterday = previousUtcDate(today);
+  if (lastCompleted !== today && lastCompleted !== yesterday) {
+    return {
+      currentStreak: 0,
+      lastCompleted,
+    };
+  }
+
+  const solvedDatesSet = new Set(solvedDatesDesc);
+  let cursor = lastCompleted;
+  let currentStreak = 0;
+
+  while (solvedDatesSet.has(cursor)) {
+    currentStreak += 1;
+    cursor = previousUtcDate(cursor);
+  }
+
+  return {
+    currentStreak,
+    lastCompleted,
+  };
 }
 
 function getStoredGroupStreak(
@@ -80,47 +119,35 @@ function getStoredGroupStreak(
 function getActiveGroupStreak(
   groupId: string,
   mode: GroupMode,
-  today = getUtcDate()
+  today = getUtcDate(),
+  persist = false
 ): {
   currentStreak: number;
   lastCompleted: string | null;
 } {
+  const solvedDates = getSolvedDatesForGroup(groupId, mode, today);
+  const computed = computeStreakFromSolvedDates(solvedDates, today);
+
+  if (!persist) {
+    return computed;
+  }
+
   const stored = getStoredGroupStreak(groupId, mode);
-  const columns = getStreakColumns(mode);
-
-  if (!stored.lastCompleted) {
-    if (stored.currentStreak !== 0) {
-      db.prepare(
-        `
-        UPDATE groups
-        SET ${columns.currentStreak} = 0
-        WHERE id = ?
-      `
-      ).run(groupId);
-    }
-
-    return { currentStreak: 0, lastCompleted: null };
-  }
-
-  const yesterday = previousUtcDate(today);
-  if (stored.lastCompleted === today || stored.lastCompleted === yesterday) {
-    return stored;
-  }
-
-  if (stored.currentStreak !== 0) {
+  if (
+    stored.currentStreak !== computed.currentStreak ||
+    stored.lastCompleted !== computed.lastCompleted
+  ) {
+    const columns = getStreakColumns(mode);
     db.prepare(
       `
       UPDATE groups
-      SET ${columns.currentStreak} = 0
+      SET ${columns.currentStreak} = ?, ${columns.lastCompleted} = ?
       WHERE id = ?
     `
-    ).run(groupId);
+    ).run(computed.currentStreak, computed.lastCompleted, groupId);
   }
 
-  return {
-    currentStreak: 0,
-    lastCompleted: stored.lastCompleted,
-  };
+  return computed;
 }
 
 function updateGroupStreakForToday(
@@ -131,32 +158,7 @@ function updateGroupStreakForToday(
   currentStreak: number;
   lastCompleted: string | null;
 } {
-  const stored = getActiveGroupStreak(groupId, mode, today);
-  const columns = getStreakColumns(mode);
-
-  if (!isGroupSolvedOnDate(groupId, today, mode)) {
-    return stored;
-  }
-
-  if (stored.lastCompleted === today) {
-    return stored;
-  }
-
-  const yesterday = previousUtcDate(today);
-  const nextStreak = stored.lastCompleted === yesterday ? stored.currentStreak + 1 : 1;
-
-  db.prepare(
-    `
-    UPDATE groups
-    SET ${columns.currentStreak} = ?, ${columns.lastCompleted} = ?
-    WHERE id = ?
-  `
-  ).run(nextStreak, today, groupId);
-
-  return {
-    currentStreak: nextStreak,
-    lastCompleted: today,
-  };
+  return getActiveGroupStreak(groupId, mode, today, true);
 }
 
 export function createGroup(name: string) {
@@ -346,7 +348,7 @@ export function getGroupDailyStatus(
     .get(groupId) as { id: string; name: string } | undefined;
   if (!group) return null;
 
-  const streak = getActiveGroupStreak(groupId, mode, date);
+  const streak = getActiveGroupStreak(groupId, mode, getUtcDate());
   const solveTable = getSolveTableName(mode);
   const finishedRows = db
     .prepare(
