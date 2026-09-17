@@ -165,7 +165,7 @@ const Heatmap = React.forwardRef<HTMLDivElement, CalendarProps>(
             if (next) setActiveStartDate(clampMonth(next, startDate, endDate));
           }}
           minDate={startDate}
-          maxDate={endDate}
+          maxDate={endDate ? new Date(endDate.getTime() + 24 * 60 * 60 * 1000) : undefined} // make it clickable for TODAY
           minDetail="month"
           maxDetail="month"
           showNeighboringMonth={false}
