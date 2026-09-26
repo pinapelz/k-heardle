@@ -275,3 +275,28 @@ export const DayTable = styled.table`
     color: var(--cl-gray-10);
   }
 `;
+
+export const ShareStreakButton = styled.button`
+  border: 1px solid var(--cl-cyan-6);
+  color: var(--cl-cyan-6);
+  background: transparent;
+  padding: 10px 14px;
+  font-family: "Roboto Mono", monospace;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+
+  &:hover {
+    background: var(--cl-cyan-6);
+    color: var(--cl-white, #fff);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  @media (max-width: 640px) {
+    width: 100%;
+  }
+`;

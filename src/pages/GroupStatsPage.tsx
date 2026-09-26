@@ -12,7 +12,6 @@ import {
 } from "../helpers/group";
 import * as Styles from "../styles/group-stats-styles";
 
-
 function getUtcDate(): string {
   return new Date().toISOString().split("T")[0];
 }
@@ -38,7 +37,6 @@ function historyDateRange(solvedDates: string[]): {
   );
   return { startDate, endDate };
 }
-
 
 export function GroupStatsPage() {
   const navigate = useNavigate();
@@ -66,8 +64,12 @@ export function GroupStatsPage() {
   const [hasLoaded, setHasLoaded] = React.useState(false);
   const [selectedDate, setSelectedDate] = React.useState(getUtcDate());
   const [isDateLoading, setIsDateLoading] = React.useState(false);
-  const [groupStatus, setGroupStatus] = React.useState<GroupDailyStatus | null>(null);
+  const [groupStatus, setGroupStatus] = React.useState<GroupDailyStatus | null>(
+    null
+  );
   const [daySolves, setDaySolves] = React.useState<GroupDaySolve[]>([]);
+  const [isCopied, setIsCopied] = React.useState(false);
+  const copiedTimeoutRef = React.useRef<number | null>(null);
 
   const loadHistory = React.useCallback(
     async (targetMode: GroupStatusMode) => {
@@ -104,7 +106,11 @@ export function GroupStatsPage() {
       }
 
       try {
-        const status = await getGroupDailyStatus(groupId, targetDate, targetMode);
+        const status = await getGroupDailyStatus(
+          groupId,
+          targetDate,
+          targetMode
+        );
         setGroupStatus(status);
       } catch {
         setGroupStatus(null);
@@ -183,6 +189,23 @@ export function GroupStatsPage() {
     [solvedDates, attemptedDates]
   );
 
+  const copyStreakMessage = React.useCallback(() => {
+    if (!groupStatus) return;
+    let message = `CALLING ALL ${groupStatus.groupName} GROUP MEMBERS! LETS START A DAILY STREAK! ${window.location.href}`;
+    if (groupStatus.currentStreak !== 0) {
+      message = `${groupStatus.groupName} is on a ${groupStatus.currentStreak} daily streak (${mode} mode)! DON'T LET IT BREAK! ${window.location.href}`;
+    }
+    navigator.clipboard.writeText(message);
+  }, [groupStatus, mode]);
+
+  React.useEffect(() => {
+    return () => {
+      if (copiedTimeoutRef.current !== null) {
+        window.clearTimeout(copiedTimeoutRef.current);
+      }
+    };
+  }, []);
+
   const { startDate, endDate } = historyDateRange(historyDates);
 
   return (
@@ -199,9 +222,7 @@ export function GroupStatsPage() {
           <Styles.ControlLabel>Mode</Styles.ControlLabel>
           <Styles.ModeSelect
             value={mode}
-            onChange={(event) =>
-              setMode(event.target.value as GroupStatusMode)
-            }
+            onChange={(event) => setMode(event.target.value as GroupStatusMode)}
           >
             <option value="daily">Daily</option>
             <option value="dailyMV">Daily MV</option>
@@ -230,17 +251,19 @@ export function GroupStatsPage() {
           {groupStatus ? (
             <>
               {groupStatus.streakAtRisk ? "⚠️ " : ""}
-              {groupStatus.currentStreak} {groupStatus.currentStreak === 1 ? "day" : "days"}
+              {groupStatus.currentStreak}{" "}
+              {groupStatus.currentStreak === 1 ? "day" : "days"}
             </>
           ) : (
             "—"
           )}
         </Styles.StreakValue>
-        {isDateLoading && <Styles.DateLoadingInline>Updating…</Styles.DateLoadingInline>}
+        {isDateLoading && (
+          <Styles.DateLoadingInline>Updating…</Styles.DateLoadingInline>
+        )}
       </Styles.StreakCard>
       {!error && hasLoaded && (
         <Styles.HeatmapCard>
-
           <Heatmap
             value={heatmapValue}
             startDate={startDate}
@@ -250,7 +273,10 @@ export function GroupStatsPage() {
           />
 
           <Styles.DayTableWrap>
-            <Styles.DayTableTitle>Daily stats for {new Date(selectedDate.replace(/-/g, "/")).toLocaleDateString()}</Styles.DayTableTitle>
+            <Styles.DayTableTitle>
+              Daily stats for{" "}
+              {new Date(selectedDate.replace(/-/g, "/")).toLocaleDateString()}
+            </Styles.DayTableTitle>
             {isDateLoading ? (
               <Styles.DateLoading>
                 <Styles.Spinner />
@@ -283,6 +309,23 @@ export function GroupStatsPage() {
           </Styles.DayTableWrap>
         </Styles.HeatmapCard>
       )}
+      <Styles.ShareStreakButton
+        onClick={() => {
+          setIsCopied(true);
+          copyStreakMessage();
+
+          if (copiedTimeoutRef.current !== null) {
+            window.clearTimeout(copiedTimeoutRef.current);
+          }
+
+          copiedTimeoutRef.current = window.setTimeout(() => {
+            setIsCopied(false);
+            copiedTimeoutRef.current = null;
+          }, 1000);
+        }}
+      >
+        {isCopied ? "Copied" : "Share Streak"}
+      </Styles.ShareStreakButton>
     </Styles.Container>
   );
 }
