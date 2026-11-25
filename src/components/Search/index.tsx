@@ -15,14 +15,55 @@ interface Props {
 export function Search({ currentTry, setSelectedSong, songs }: Props) {
   const [value, setValue] = React.useState("");
   const [results, setResults] = React.useState<Song[]>([]);
+  const [selectedIdx, setSelectedIdx] = React.useState(-1);
+
+  const selectSong = (song: Song) => {
+    setSelectedSong(song);
+    setValue(`${song.artist} - ${song.name}`);
+    setResults([]);
+    setSelectedIdx(-1);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      const songToSelect = selectedIdx >= 0 ? results[selectedIdx] : results[0];
+      if (!songToSelect) return;
+      selectSong(songToSelect);
+      return;
+    }
+
+    if (e.key === "Escape") {
+      setResults([]);
+      setSelectedIdx(-1);
+      return;
+    }
+
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      if (results.length === 0) return;
+
+      setSelectedIdx((prev) => (prev >= results.length - 1 ? 0 : prev + 1));
+      return;
+    }
+
+    if (e.key === "ArrowUp") {
+      e.preventDefault();
+      if (results.length === 0) return;
+
+      setSelectedIdx((prev) => (prev <= 0 ? results.length - 1 : prev - 1));
+    }
+  };
 
   React.useEffect(() => {
     if (!value.trim()) {
       setResults([]);
+      setSelectedIdx(-1);
       return;
     }
 
-    setResults(searchSong(value, songs));
+    const nextResults = searchSong(value, songs);
+    setResults(nextResults);
+    setSelectedIdx(-1);
   }, [value, songs]);
 
   React.useEffect(() => {
@@ -32,14 +73,11 @@ export function Search({ currentTry, setSelectedSong, songs }: Props) {
   return (
     <Styled.Container>
       <Styled.ResultsContainer>
-        {results.map((song) => (
+        {results.map((song, index) => (
           <Styled.Result
             key={song.youtubeId}
-            onClick={() => {
-              setSelectedSong(song);
-              setValue(`${song.artist} - ${song.name}`);
-              setResults([]);
-            }}
+            onClick={() => selectSong(song)}
+            style={{ textDecoration: index === selectedIdx ? "underline" : undefined }}
           >
             <Styled.ResultText>
               {song.artist} - {song.name}
@@ -54,6 +92,7 @@ export function Search({ currentTry, setSelectedSong, songs }: Props) {
           <Styled.Input
             value={value}
             onChange={(e) => setValue(e.currentTarget.value)}
+            onKeyDown={handleKeyDown}
             placeholder="Search"
           />
         </Styled.SearchPadding>
