@@ -16,6 +16,7 @@ import {
   getStoredGroupMembership,
   GroupDailyStatus,
 } from "../../helpers/group";
+import { Score } from '../Score';
 
 interface SolutionProps {
   didGuess: boolean;
@@ -112,6 +113,8 @@ export function Result({
 }: Props) {
   const [timeLeftStr, setTimeLeftStr] = useState<string>('');
   const [groupStatus, setGroupStatus] = React.useState<GroupDailyStatus | null>(null);
+  const scoreProcessedKeyRef = React.useRef<string | null>(null);
+
 
   React.useEffect(() => {
     const updateTimeLeft = () => {
@@ -169,6 +172,29 @@ export function Result({
       cancelled = true;
     };
   }, [isUnlimited, sessionDate, chartMode]);
+
+  React.useEffect(() => {
+    if (!isUnlimited) return;
+
+    const roundKey = `${todaysSolution.youtubeId}:${didGuess ? "win" : "lose"}:${currentTry}`;
+    if (scoreProcessedKeyRef.current === roundKey) return;
+    scoreProcessedKeyRef.current = roundKey;
+
+    if (didGuess) {
+      const currentScore = parseInt(localStorage.getItem("unlimitedScore") ?? "0", 10);
+      const highScore = parseInt(localStorage.getItem("unlimitedHighScore") ?? "0", 10);
+      const scoreEarned = 7 - currentTry; // 6 tries max, guessing on the first try gives 6 points, second try gives 5 points, etc.
+      const nextScore = currentScore + scoreEarned;
+
+      localStorage.setItem("unlimitedScore", nextScore.toString());
+      if (nextScore > highScore) {
+        localStorage.setItem("unlimitedHighScore", nextScore.toString());
+      }
+      return;
+    }
+
+    localStorage.setItem("unlimitedScore", "0");
+  }, [isUnlimited, didGuess, currentTry]);
 
   if (didGuess) {
     const textForTry = ["Perfect!", "Wow!", "Super!", "Congrats!", "Nice!"];
@@ -229,6 +255,7 @@ export function Result({
         currentTry={currentTry}
         isUnlimited={isUnlimited}
       />
+
       {!isUnlimited && (
         <GuessDistributionChart
           currentTry={currentTry}
@@ -253,9 +280,12 @@ export function Result({
       )}
 
       {isUnlimited && onPlayAgain ? (
-        <Button variant="red" onClick={onPlayAgain}>
-          Play Again
-        </Button>
+        <>
+          <Button variant="red" onClick={onPlayAgain}>
+            Play Again
+          </Button>
+          <Score />
+        </>
       ) : (
         <Styled.TimeToNext>
           Try again in {timeLeftStr}.

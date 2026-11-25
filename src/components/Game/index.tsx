@@ -5,7 +5,7 @@ import { Song } from "../../types/song";
 import { playTimes } from "../../constants";
 import { songs as musicVideos } from "../../../server/data/mvs";
 
-import { Button, Guess, YTPlayer, Search, Result, Player, MVPlayer } from "../";
+import { Button, Guess, YTPlayer, Search, Result, Player, MVPlayer, Score } from "../";
 
 import * as Styled from "./index.styled";
 
@@ -116,6 +116,7 @@ export function Game({
 
   return (
     <>
+      {mode === "unlimited" && <Score />}
       {guesses.map((guess: GuessType, index) => (
         <Guess key={index} guess={guess} active={index === currentTry} />
       ))}

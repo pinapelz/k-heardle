@@ -10,3 +10,4 @@ export { Player as YTPlayer } from "./YTPlayer";
 export { Player } from "./Player";
 export { Result } from "./Result";
 export { Search } from "./Search";
+export { Score } from "./Score";
