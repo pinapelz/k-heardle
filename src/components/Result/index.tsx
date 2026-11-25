@@ -233,9 +233,12 @@ export function Result({
         )}
 
         {isUnlimited && onPlayAgain ? (
-          <Button variant="green" onClick={onPlayAgain}>
-            Play Again
-          </Button>
+          <>
+            <Button variant="green" onClick={onPlayAgain}>
+              Play Again
+            </Button>
+            <Score />
+          </>
         ) : (
           <Styled.TimeToNext>
             The next {appName} will be available in {timeLeftStr}!
