@@ -88,21 +88,9 @@ export function Player({ id, currentTry }: Props) {
     [],
   );
 
-  const setReady = React.useCallback(async () => {
-
-    const player = playerRef.current?.internalPlayer;
-    if (!player) return;
-
-    const duration = await player.getDuration();
-
-    const maxStart = Math.max(0, duration - MIN_REMAINING_SEC);
-    const randomStart = Math.random() * maxStart;
-
-    setStartTime(randomStart);
-    player.setVolume(volume * 100);
-    player.seekTo(randomStart, true);
+  const setReady = React.useCallback(() => {
     setIsReady(true);
-  }, [volume]);
+  }, []);
 
   React.useEffect(() => {
     if (!isReady) return;
@@ -117,8 +105,6 @@ export function Player({ id, currentTry }: Props) {
       setStartTime(randomStart);
       setPlay(false);
       setCurrentTime(0);
-
-      player.seekTo(randomStart, true);
     });
   }, [id, isReady]);
 
